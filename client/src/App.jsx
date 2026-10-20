@@ -1,51 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import RecordsView from './RecordsView.jsx';
 
-const tabs = ['Home', 'Registered Candidates'];
+const tabs = ['Home', 'Registered Candidates', 'Registered Tutors'];
+
+const contactColumns = [
+  { key: 'name', label: 'Name', className: 'candidate-name' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'course', label: 'Course' },
+  { key: 'education', label: 'Education' },
+];
+
+const candidateColumns = [{ key: 'id', label: 'ID' }, ...contactColumns];
 
 function App() {
   const [activeTab, setActiveTab] = useState('Home');
-  const [registrations, setRegistrations] = useState([]);
-  const [requestState, setRequestState] = useState('idle');
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    if (activeTab !== 'Registered Candidates') {
-      return undefined;
-    }
-
-    const controller = new AbortController();
-
-    async function loadRegistrations() {
-      setRequestState('loading');
-      setErrorMessage('');
-
-      try {
-        const response = await fetch('/api/registrations', {
-          signal: controller.signal,
-        });
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Unable to load registrations.');
-        }
-        if (!Array.isArray(result)) {
-          throw new Error('The registrations API returned an invalid response.');
-        }
-
-        setRegistrations(result);
-        setRequestState('success');
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          return;
-        }
-        setErrorMessage(error.message || 'Unable to load registrations.');
-        setRequestState('error');
-      }
-    }
-
-    loadRegistrations();
-    return () => controller.abort();
-  }, [activeTab]);
 
   return (
     <div className="app-shell">
@@ -70,66 +39,37 @@ function App() {
       </header>
 
       <main className="content">
-        {activeTab === 'Home' ? (
+        {activeTab === 'Home' && (
           <section className="welcome-panel">
             <p className="eyebrow">CANDIDATE REGISTRATIONS</p>
             <h1>Welcome</h1>
             <p className="welcome-copy">
-              View the candidates registered for your courses from the Registered Candidates tab.
+              View the candidates registered for your courses from the Registered Candidates tab,
+              and the tutors from the Registered Tutors tab.
             </p>
           </section>
-        ) : (
-          <section aria-labelledby="registrations-heading">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">REGISTRATION DIRECTORY</p>
-                <h1 id="registrations-heading">Registered Candidates</h1>
-                <p className="section-copy">Candidate information from the registrations table.</p>
-              </div>
-            </div>
-
-            <div className="data-panel">
-              {requestState === 'loading' && (
-                <p className="status-message" role="status">Loading registrations…</p>
-              )}
-              {requestState === 'error' && (
-                <p className="status-message error-message" role="alert">
-                  Error loading registrations: {errorMessage}
-                </p>
-              )}
-              {requestState === 'success' && registrations.length === 0 && (
-                <p className="status-message" role="status">No registrations found</p>
-              )}
-              {requestState === 'success' && registrations.length > 0 && (
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Name</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Phone</th>
-                        <th scope="col">Course</th>
-                        <th scope="col">Education</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {registrations.map((registration) => (
-                        <tr key={registration.id}>
-                          <td>{registration.id}</td>
-                          <td className="candidate-name">{registration.name}</td>
-                          <td>{registration.email}</td>
-                          <td>{registration.phone}</td>
-                          <td>{registration.course}</td>
-                          <td>{registration.education}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </section>
+        )}
+        {activeTab === 'Registered Candidates' && (
+          <RecordsView
+            endpoint="/api/registrations"
+            eyebrow="REGISTRATION DIRECTORY"
+            title="Registered Candidates"
+            description="Candidate information from the PostgreSQL registrations table."
+            recordLabel="registrations"
+            columns={candidateColumns}
+            getRowKey={(record) => record.id}
+          />
+        )}
+        {activeTab === 'Registered Tutors' && (
+          <RecordsView
+            endpoint="/api/tutors"
+            eyebrow="TUTOR DIRECTORY"
+            title="Registered Tutors"
+            description="Tutor information from the MongoDB ai_class.registrations collection."
+            recordLabel="tutors"
+            columns={contactColumns}
+            getRowKey={(record) => record._id}
+          />
         )}
       </main>
     </div>
