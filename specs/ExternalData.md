@@ -1,0 +1,30 @@
+# create an application to read data from Postgres
+
+-- Create a REACT single page application using Vite (React 18, JavaScript, not TypeScript)
+-- Do NOT use Create React App, React Router, axios, or any UI library; use plain CSS and fetch
+-- create a Navbar with two tabs: Home and Registered Candidates
+-- switch between tabs using component state
+-- Connect to the database called ai_class and table registrations (schema: public)
+-- use the pg (node-postgres) package with a Pool; do NOT use an ORM (no Prisma, Sequelize, TypeORM, Knex)
+-- read DB connection settings from a .env file (PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE=ai_class) using dotenv
+-- never hardcode credentials; include a .env.example file
+-- for the backend use Express Js 4 and Postgres, running on port 5000
+-- create one endpoint: GET /api/registrations that runs SELECT * FROM registrations;
+-- return the rows as a JSON array; on error return status 500 with { "error": "<message>" }
+-- enable CORS for http://localhost:5173 only
+-- when clicked on registered candidates tab, we need to get the data from the registration table by calling GET http://localhost:5000/api/registrations
+-- show a loading message while fetching, an error message if it fails, and "No registrations found" if the table is empty
+-- display the data in an HTML table
+-- table columns:
+--   CREATE TABLE public.registrations (
+--       id        BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--       name      TEXT NOT NULL,
+--       email     TEXT NOT NULL UNIQUE,
+--       phone     TEXT NOT NULL UNIQUE,
+--       course    TEXT NOT NULL,
+--       education TEXT NOT NULL
+--   );
+-- do not add features that were not requested (no login, pagination, editing, etc.)
+-- use only packages and APIs that actually exist; if unsure, do not use it
+-- if anything is unclear, list your assumptions first before writing code
+-- output: the full folder structure (/server and /client), the complete code for every file with no placeholders, the npm install commands, and step-by-step instructions to run both servers
