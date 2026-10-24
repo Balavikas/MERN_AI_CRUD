@@ -1,0 +1,7 @@
+-- Currently we do have Registrations Table, Delete the data in the table and Rename the columns with the Field names from the Sign up Form
+-- Also Create a connection from Frontend to backend/database, When the user submits the data to create account, the details has to go to that Registrations Table
+-- Also Add form Validations
+    -- Name should not contains Digits
+    -- Password Should be more than 7 digits
+    -- Atleast One Capital Letter, 3 Digits and One Special Character
+    -- Password and Confirm Password Should Match

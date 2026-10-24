@@ -1,70 +1,56 @@
-import { useEffect, useState } from 'react';
+import useRecords from './hooks/useRecords.js';
 
-function RecordsView({ endpoint, eyebrow, title, description, recordLabel, columns, getRowKey }) {
-  const [records, setRecords] = useState([]);
-  const [requestState, setRequestState] = useState('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+function cellValue(record, column) {
+  const value = record[column.key];
+  return column.format ? column.format(value) : value;
+}
+
+function matchesQuery(record, columns, query) {
+  return columns.some((column) => String(cellValue(record, column) ?? '').toLowerCase().includes(query));
+}
+
+function RecordsView({ endpoint, source, title, description, recordLabel, columns, getRowKey, query }) {
+  const { records, status, error, reload } = useRecords(endpoint, recordLabel);
   const headingId = `${recordLabel}-heading`;
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadRecords() {
-      setRequestState('loading');
-      setErrorMessage('');
-
-      try {
-        const response = await fetch(endpoint, { signal: controller.signal });
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || `Unable to load ${recordLabel}.`);
-        }
-        if (!Array.isArray(result)) {
-          throw new Error(`The ${recordLabel} API returned an invalid response.`);
-        }
-
-        setRecords(result);
-        setRequestState('success');
-      } catch (error) {
-        if (error.name === 'AbortError') {
-          return;
-        }
-        setErrorMessage(error.message || `Unable to load ${recordLabel}.`);
-        setRequestState('error');
-      }
-    }
-
-    loadRecords();
-    return () => controller.abort();
-  }, [endpoint, recordLabel]);
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleRecords = normalizedQuery
+    ? records.filter((record) => matchesQuery(record, columns, normalizedQuery))
+    : records;
 
   return (
-    <section aria-labelledby={headingId}>
-      <div className="section-heading">
+    <section className="records" aria-labelledby={headingId}>
+      <div className="records__head">
         <div>
-          <p className="eyebrow">{eyebrow}</p>
-          <h1 id={headingId}>{title}</h1>
-          <p className="section-copy">{description}</p>
+          <p className="kicker">{source}</p>
+          <h2 id={headingId}>{title}</h2>
+          <p className="section__sub">{description}</p>
         </div>
-        {requestState === 'success' && records.length > 0 && (
-          <span className="record-count">{records.length} total</span>
+        {status === 'success' && records.length > 0 && (
+          <span className="record-count">
+            {normalizedQuery ? `${visibleRecords.length} of ${records.length}` : `${records.length} total`}
+          </span>
         )}
       </div>
 
       <div className="data-panel">
-        {requestState === 'loading' && (
+        {status === 'loading' && (
           <p className="status-message" role="status">Loading {recordLabel}…</p>
         )}
-        {requestState === 'error' && (
-          <p className="status-message error-message" role="alert">
-            Error loading {recordLabel}: {errorMessage}
-          </p>
+        {status === 'error' && (
+          <div className="status-message status-message--error" role="alert">
+            <p>Couldn't load {recordLabel}: {error}</p>
+            <button type="button" className="btn btn--outline btn--sm" onClick={reload}>
+              Try again
+            </button>
+          </div>
         )}
-        {requestState === 'success' && records.length === 0 && (
-          <p className="status-message" role="status">No {recordLabel} found</p>
+        {status === 'success' && records.length === 0 && (
+          <p className="status-message" role="status">No {recordLabel} yet. Be the first to join.</p>
         )}
-        {requestState === 'success' && records.length > 0 && (
+        {status === 'success' && records.length > 0 && visibleRecords.length === 0 && (
+          <p className="status-message" role="status">Nobody matches “{query.trim()}”.</p>
+        )}
+        {status === 'success' && visibleRecords.length > 0 && (
           <div className="table-scroll">
             <table>
               <thead>
@@ -75,10 +61,10 @@ function RecordsView({ endpoint, eyebrow, title, description, recordLabel, colum
                 </tr>
               </thead>
               <tbody>
-                {records.map((record) => (
+                {visibleRecords.map((record) => (
                   <tr key={getRowKey(record)}>
                     {columns.map((column) => (
-                      <td className={column.className} key={column.key}>{record[column.key]}</td>
+                      <td className={column.className} key={column.key}>{cellValue(record, column)}</td>
                     ))}
                   </tr>
                 ))}

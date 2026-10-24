@@ -1,0 +1,2 @@
+-- The landing page I am seeing is what I should see after Login, So create a different page before Login, Like a login page
+-- Just design page for now, Do not implement any backend or databse right now

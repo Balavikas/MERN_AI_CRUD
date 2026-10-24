@@ -1,0 +1,4 @@
+-- Replace the Logo with the below
+    -- When the Light mode is on: REACT_CRUD/client/src/assets/Primary logo — light@1x.png
+    -- When The Light Mode is OFF: REACT_CRUD/client/src/assets/Primary logo — dark@1x.png
+    -- For the Favicon: REACT_CRUD/client/src/assets/App icon, favicon & stacked lockup@1x.png
