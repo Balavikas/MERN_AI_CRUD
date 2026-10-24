@@ -1,0 +1,1 @@
+-- Now when the user is Registered and If he comes back to the site and Clicks on Login Tab and Enter the same credentials which he used for the Registration, The Login should work, If his credentials are wrong we are not going him to Login to our site, We will display Invalid Credentials or No Email Id Associated based on what user has entered
