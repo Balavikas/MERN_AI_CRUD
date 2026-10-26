@@ -62,7 +62,7 @@ describe('ReportView', () => {
     const user = userEvent.setup();
     render(<ReportView token="director-token" />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Database is down');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong.');
     await user.click(screen.getByRole('button', { name: 'Try again' }));
 
     expect(await screen.findByRole('table')).toBeInTheDocument();

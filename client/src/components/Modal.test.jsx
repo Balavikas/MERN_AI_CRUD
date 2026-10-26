@@ -63,4 +63,25 @@ describe('Modal', () => {
     const { dialog } = renderModal({ wide: true });
     expect(dialog).toHaveClass('modal', 'modal--wide');
   });
+
+  describe('dismissible={false}', () => {
+    it('is an alert dialog described by its message, with no close button', () => {
+      renderModal({ dismissible: false, title: 'Still there?', description: 'Do you still want to continue?' });
+      const dialog = screen.getByRole('alertdialog', { name: 'Still there?' });
+      expect(dialog).toHaveAccessibleDescription('Do you still want to continue?');
+      expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    });
+
+    it('ignores Escape and backdrop clicks', () => {
+      const { onClose, dialog } = renderModal({ dismissible: false });
+
+      const escape = new Event('cancel', { cancelable: true });
+      fireEvent(dialog, escape);
+      expect(escape.defaultPrevented).toBe(true);
+
+      fireEvent.click(dialog);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(dialog.open).toBe(true);
+    });
+  });
 });

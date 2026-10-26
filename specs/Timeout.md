@@ -1,0 +1,5 @@
+-- Implement a Timeout modal On every page (Execpt for the Root page)
+-- If they are not doing button Clicks on the page for 7min, Pop a modal, with a message displaying, "You are inactive for some time, do you still want to Conintue?" and display Continue button and Logout Button
+-- If they click on coninue, they Inactivity timer resets and starts countining again
+-- If they Click Logout, they will be navigated to the Root page
+-- If there is any Issues Displaying the backend Infomation, Instead of cannot load, failed to execute json, Display a modal message like "something went wrong please logout and login again to coninue your progress, sorry for Inconvenience" and then just display logout button

@@ -2,12 +2,12 @@
 
 A React and Vite client with an Express API, styled after the LMS redesign specs in [specs/Redesign.md](specs/Redesign.md), [specs/RedesignPatch.md](specs/RedesignPatch.md) and [specs/RedesignPatch2.md](specs/RedesignPatch2.md), plus [specs/RegistrationFeature.md](specs/RegistrationFeature.md), [specs/Login.md](specs/Login.md) [specs/AfterLogin.md](specs/AfterLogin.md), [specs/CourseTable.md](specs/CourseTable.md), [specs/FacultyDashboard.md](specs/FacultyDashboard.md), [specs/AssignFaculty.md](specs/AssignFaculty.md) and [specs/DirectorsDashboard.md](specs/DirectorsDashboard.md). Learner accounts and the course catalog live in PostgreSQL and mentors (tutors) live in MongoDB.
 
-- **Log in / Sign up** (shown first): sign up creates a real account in the PostgreSQL `registrations` table, with validation in the browser and again on the server. Log in checks the email and password against those accounts. An unknown email shows "No account is associated with that email"; a wrong password shows "Invalid credentials". Both forms have a role dropdown (Student, Faculty, Director). The role chosen at sign-up is saved in the `role` column, and log in only works with that same role. The **Join the Movement** form on Home always creates a student.
+- **Log in / Sign up** (shown first): sign up creates a real account in the PostgreSQL `registrations` table, with validation in the browser and again on the server. Log in checks the email and password against those accounts. An unknown email shows "No account is associated with that email"; a wrong password shows "Invalid credentials". Beside the form, **Courses open now** lists real courses from the database that a director has assigned faculty to, with those faculty as instructors, most enrolled first ([specs/Root.md](specs/Root.md)). Both forms have a role dropdown (Student, Faculty, Director). The role chosen at sign-up is saved in the `role` column, and log in only works with that same role. The **Join the Movement** form on Home always creates a student.
 
 - **Role dashboards** (the first tab after logging in):
   - **Student · My Learning**: completed assignments on the left (with a "Still to do" list to mark assignments done), an **Add the course** button in the middle, and current courses on the right.
-  - **Faculty · Faculty Desk**: **Edit student** on the left, **Show all registered students** in the middle, and **Add Assignment** (with the posted assignments) on the right. Below them, an **Enrollments by course** bar chart ranks every course by how many students are taking it, with a hover/focus tooltip and a Table view of the same numbers.
-  - **Director · Director's Office**: **Show Registered Students** on the left, **Report** in the middle (totals plus a per-course breakdown, downloadable as CSV), and **Show Registered Faculty** (a searchable table of faculty with how many courses each one teaches), **Add Faculty** and **Delete Faculty** on the right. Below them, **Candidates by Education Level** is a grouped bar chart (Recharts) of students and faculty per education level, with All / Students only / Faculty only filters, hover tooltips and a Table view. Then **Course assignments** lets the director assign faculty to courses and unassign them. A faculty member can only post assignments to the courses they are assigned to; their dashboard lists them under **Courses you teach**.
+  - **Faculty · Faculty Desk**: **Edit student** on the left, **Show all registered students** in the middle, and **Add Assignment** on the right, with **View your courses** and **View assignments** (every posted assignment, who posted it and how many students finished it) opening in pop-ups. Below them, an **Enrollments by course** bar chart ranks every course by how many students are taking it, with a hover/focus tooltip and a Table view of the same numbers.
+  - **Director · Director's Office**: **Show Registered Students** on the left, **Report** in the middle (totals plus a per-course breakdown, downloadable as CSV), and **Show Registered Faculty** (a searchable table of faculty with how many courses each one teaches), **Add Faculty**, **Edit Faculty** (fix a faculty member's name, email, phone or education, like Edit student on the Faculty Desk) and **Delete Faculty** on the right. Below them, **Candidates by Education Level** is a grouped bar chart (Recharts) of students and faculty per education level, with All / Students only / Faculty only filters, hover tooltips and a Table view. Then **Course assignments** lets the director assign faculty to courses and unassign them. A faculty member can only post assignments to the courses they are assigned to; they see them with **View your courses** on the Assignments card. The three Faculty Desk cards are the same height ([specs/AssignmentTab.md](specs/AssignmentTab.md)).
 
 - **Hidden for now** ([specs/Cleanup.md](specs/Cleanup.md)): the Home, Manage Crew and Toolkit pages below are still in the code but have no tab, no footer links and no course search. To show one again, remove its id from `hiddenPages` in `client/src/App.jsx`.
 - **Home**: hero with a continue-learning card, the "hottest right now" course carousel, and a bento grid with live crew stats, the **Join the Movement** form (creates an account for someone else in PostgreSQL), downloadable resources and a project gallery.
@@ -15,6 +15,9 @@ A React and Vite client with an Express API, styled after the LMS redesign specs
 - **The Toolkit**: cheat sheets plus CSV exports of the live rosters.
 - Responsive on phones, tablets and desktops ([specs/responsive.md](specs/responsive.md)): page layouts use Bootstrap's grid and flex utilities. Only `bootstrap-grid` and `bootstrap-utilities` are loaded, so Bootstrap doesn't restyle the app's own buttons, forms and tables.
 - The header has the theme toggle and a **Log out** button.
+- **Session dialogs** ([specs/Timeout.md](specs/Timeout.md)), on every page except the login page:
+  - After 7 minutes without a click or key press, a dialog asks whether to continue. **Continue** restarts the timer; **Log out** returns to the login page. The dialog counts down 3 minutes; if neither button is pressed by then, the user is logged out and taken to the login page.
+  - If the backend fails (server unreachable, a 5xx, an unreadable response or an expired session), a dialog asks the user to log out and log in again, with only a **Log out** button. Ordinary errors such as a wrong password, a duplicate email or a missing course assignment still show inline next to the form.
 - Light and dark themes via the header toggle, using View Transitions where the browser supports them.
 
 ## Requirements
@@ -98,7 +101,7 @@ POST http://localhost:5000/api/login           # Log in (JSON: email, password)
 GET  http://localhost:5000/api/tutors          # MongoDB mentors
 ```
 
-`GET /api/courses` returns the catalog (newest first) and needs no login.
+`GET /api/courses` returns the catalog (newest first) and `GET /api/courses/taught` returns only courses with assigned faculty (plus their names and enrollment counts). Neither needs a login.
 
 `POST /api/login` also takes `role` and returns a `token`. The dashboard endpoints need an `Authorization: Bearer <token>` header from an account with the listed role:
 
@@ -116,6 +119,7 @@ GET    /api/faculty-assignments/mine            # faculty: the courses I'm assig
 POST   /api/assignments                         # faculty: create (JSON: courseId, title, description, dueDate); 403 unless assigned to the course
 GET    /api/faculty                             # director: list faculty, with course_count (courses assigned)
 POST   /api/faculty                             # director: add faculty (same JSON as sign-up)
+PATCH  /api/faculty/:id                         # director: edit a faculty member (JSON: fullName, email, phoneNumber, education)
 DELETE /api/faculty/:id                         # director: delete faculty (and their course assignments)
 GET    /api/faculty-assignments                 # director: every faculty-to-course assignment
 POST   /api/faculty-assignments                 # director: assign (JSON: facultyId, courseId)

@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import StudentEditor from './StudentEditor.jsx';
+import ProfileEditor from './ProfileEditor.jsx';
+import { updateFaculty, updateStudent } from '../api.js';
 import { mockFetch } from '../test/mockFetch.js';
 
 const students = [
@@ -12,11 +13,11 @@ const students = [
 function setup(patchReply) {
   const fetchMock = mockFetch({ 'PATCH /api/students/7': patchReply });
   const onSaved = vi.fn();
-  render(<StudentEditor token="faculty-token" students={students} onSaved={onSaved} />);
+  render(<ProfileEditor token="faculty-token" people={students} label="Student" save={updateStudent} onSaved={onSaved} />);
   return { fetchMock, onSaved, user: userEvent.setup() };
 }
 
-describe('StudentEditor', () => {
+describe('ProfileEditor for students (faculty desk)', () => {
   it('shows the form only after a student is picked, filled with their details', async () => {
     const { user } = setup();
     expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
@@ -78,5 +79,44 @@ describe('StudentEditor', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('That email already has an account.');
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
     expect(onSaved).not.toHaveBeenCalled();
+  });
+});
+
+describe('ProfileEditor for faculty (director dashboard)', () => {
+  const faculty = [
+    { id: '40', full_name: 'Fiona Faculty', email: 'fiona@example.com', phone_number: '+1 555 010 2222', education: 'Postgraduate' },
+  ];
+
+  function setupFaculty(patchReply) {
+    const fetchMock = mockFetch({ 'PATCH /api/faculty/40': patchReply });
+    const onSaved = vi.fn();
+    render(<ProfileEditor token="director-token" people={faculty} label="Faculty member" save={updateFaculty} onSaved={onSaved} />);
+    return { fetchMock, onSaved, user: userEvent.setup() };
+  }
+
+  it('lists faculty under their own label', () => {
+    setupFaculty();
+    expect(screen.getByRole('option', { name: 'Choose a faculty member…' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Faculty member')).toHaveDisplayValue('Choose a faculty member…');
+  });
+
+  it('saves to the faculty endpoint with the director token', async () => {
+    const saved = { ...faculty[0], email: 'fiona.f@example.com' };
+    const { fetchMock, onSaved, user } = setupFaculty({ body: saved });
+
+    await user.selectOptions(screen.getByLabelText('Faculty member'), '40');
+    await user.clear(screen.getByLabelText('Email'));
+    await user.type(screen.getByLabelText('Email'), 'fiona.f@example.com');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByText("Saved Fiona Faculty's details.")).toBeInTheDocument();
+    expect(onSaved).toHaveBeenCalledWith(saved);
+    const [url, request] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/faculty/40');
+    expect(request.method).toBe('PATCH');
+    expect(request.headers.Authorization).toBe('Bearer director-token');
+    expect(JSON.parse(request.body)).toEqual({
+      fullName: 'Fiona Faculty', email: 'fiona.f@example.com', phoneNumber: '+1 555 010 2222', education: 'Postgraduate',
+    });
   });
 });

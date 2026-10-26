@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import Footer from './components/Footer.jsx';
 import Header from './components/Header.jsx';
+import Icon from './components/Icon.jsx';
+import LogoutCountdown from './components/LogoutCountdown.jsx';
+import Modal from './components/Modal.jsx';
 import SubNav from './components/SubNav.jsx';
+import useInactivityTimer from './hooks/useInactivityTimer.js';
 import useTheme from './hooks/useTheme.js';
 import CrewPage from './pages/CrewPage.jsx';
 import DirectorPage from './pages/DirectorPage.jsx';
@@ -10,7 +14,8 @@ import HomePage from './pages/HomePage.jsx';
 import AuthPage from './pages/AuthPage.jsx';
 import StudentPage from './pages/StudentPage.jsx';
 import ToolkitPage from './pages/ToolkitPage.jsx';
-import { continueLearning, learner } from './data.js';
+import { onSystemError } from './api.js';
+import { continueLearning, inactivityLogoutGraceMs, inactivityTimeoutMs, learner } from './data.js';
 import { scrollBehavior, withViewTransition } from './utils/motion.js';
 
 // Each role lands on its own dashboard (specs/AfterLogin.md), shown as the first tab.
@@ -67,6 +72,20 @@ function App() {
   const [filters, setFilters] = useState(noFilters);
   const [startedCourseIds, setStartedCourseIds] = useState([]);
   const [scrollRequest, setScrollRequest] = useState(null);
+  // Session dialogs (specs/Timeout.md): shown only while someone is logged in, never on the login page.
+  // When the inactivity dialog opened (a Date.now() timestamp), or null while the user is active.
+  const [inactiveSince, setInactiveSince] = useState(null);
+  const inactive = inactiveSince !== null;
+  const [systemError, setSystemError] = useState(false);
+
+  useInactivityTimer(
+    Boolean(session) && !inactive && !systemError,
+    inactivityTimeoutMs,
+    () => setInactiveSince(Date.now()),
+  );
+
+  // api.js reports failures the user can't fix (server down, 5xx, unreadable response, expired session).
+  useEffect(() => (session ? onSystemError(() => setSystemError(true)) : undefined), [session]);
 
   const navigate = useCallback((page, targetId, focusId) => {
     if (page !== activePage) {
@@ -121,6 +140,8 @@ function App() {
   function logOut() {
     localStorage.removeItem(sessionStorageKey);
     sessionStorage.removeItem(sessionStorageKey);
+    setInactiveSince(null);
+    setSystemError(false);
     withViewTransition(() => {
       setSession(null);
       setActivePage('dashboard');
@@ -130,6 +151,15 @@ function App() {
     });
     window.scrollTo({ top: 0 });
   }
+
+  // Nobody answered the inactivity dialog in time: log out and go back to the login page.
+  useEffect(() => {
+    if (!inactive || systemError) {
+      return undefined;
+    }
+    const timer = setTimeout(logOut, inactiveSince + inactivityLogoutGraceMs - Date.now());
+    return () => clearTimeout(timer);
+  }, [inactiveSince, systemError]);
 
   function toggleCategory(category) {
     setFilters((current) => ({ ...current, category: current.category === category ? '' : category }));
@@ -213,6 +243,40 @@ function App() {
       </main>
 
       <Footer onNavigate={navigate} onCategoryPick={pickCategory} hiddenPages={hiddenPages} />
+
+      <Modal
+        id="inactivity"
+        open={inactive && !systemError}
+        title="Still there?"
+        description="You've been inactive for some time. Do you still want to continue?"
+        dismissible={false}
+      >
+        {inactive && <LogoutCountdown deadline={inactiveSince + inactivityLogoutGraceMs} />}
+        <div className="dashboard__buttons">
+          <button type="button" className="btn btn--primary" onClick={() => setInactiveSince(null)}>
+            Continue
+          </button>
+          <button type="button" className="btn btn--outline" onClick={logOut}>
+            <Icon name="logOut" size={18} />
+            Log out
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        id="system-error"
+        open={systemError}
+        title="Something went wrong"
+        description="Something went wrong. Please log out and log in again to continue your progress. Sorry for the inconvenience."
+        dismissible={false}
+      >
+        <div className="dashboard__buttons">
+          <button type="button" className="btn btn--primary" onClick={logOut}>
+            <Icon name="logOut" size={18} />
+            Log out
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

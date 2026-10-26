@@ -1,32 +1,32 @@
 import { useState } from 'react';
 import Icon from './Icon.jsx';
-import { updateStudent } from '../api.js';
 import { educationLevels } from '../data.js';
 import { validateProfile } from '../validation.js';
 
 const fieldOrder = ['fullName', 'email', 'phoneNumber', 'education'];
 
-function toForm(student) {
+function toForm(person) {
   return {
-    fullName: student.full_name,
-    email: student.email,
-    phoneNumber: student.phone_number,
-    education: student.education,
+    fullName: person.full_name,
+    email: person.email,
+    phoneNumber: person.phone_number,
+    education: person.education,
   };
 }
 
-// Lets faculty pick a registered student and fix their name, email, phone or education.
-function StudentEditor({ token, students, onSaved }) {
-  const [studentId, setStudentId] = useState('');
+// Pick one account from `people` and fix their name, email, phone or education. Faculty use it for students
+// (save = updateStudent) and directors for faculty (save = updateFaculty); `label` names the kind of person.
+function ProfileEditor({ token, people, label, save, onSaved }) {
+  const [personId, setPersonId] = useState('');
   const [form, setForm] = useState(null);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState('');
 
-  function pickStudent(event) {
-    const student = students.find((candidate) => String(candidate.id) === event.target.value);
-    setStudentId(event.target.value);
-    setForm(student ? toForm(student) : null);
+  function pickPerson(event) {
+    const person = people.find((candidate) => String(candidate.id) === event.target.value);
+    setPersonId(event.target.value);
+    setForm(person ? toForm(person) : null);
     setErrors({});
     setStatus('idle');
     setMessage('');
@@ -62,11 +62,11 @@ function StudentEditor({ token, students, onSaved }) {
 
     setStatus('submitting');
     try {
-      const student = await updateStudent(token, studentId, form);
-      setForm(toForm(student));
+      const saved = await save(token, personId, form);
+      setForm(toForm(saved));
       setStatus('success');
-      setMessage(`Saved ${student.full_name}'s details.`);
-      onSaved(student);
+      setMessage(`Saved ${saved.full_name}'s details.`);
+      onSaved(saved);
     } catch (error) {
       setStatus('error');
       setErrors(error.fieldErrors || {});
@@ -94,12 +94,12 @@ function StudentEditor({ token, students, onSaved }) {
   return (
     <div className="form">
       <div className="field">
-        <label htmlFor="edit-student">Student</label>
+        <label htmlFor="edit-person">{label}</label>
         <div className="select">
-          <select id="edit-student" className="input" value={studentId} onChange={pickStudent}>
-            <option value="">Choose a student…</option>
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>{student.full_name} · {student.email}</option>
+          <select id="edit-person" className="input" value={personId} onChange={pickPerson}>
+            <option value="">Choose a {label.toLowerCase()}…</option>
+            {people.map((person) => (
+              <option key={person.id} value={person.id}>{person.full_name} · {person.email}</option>
             ))}
           </select>
           <Icon name="chevronDown" size={18} className="select__icon" />
@@ -156,4 +156,4 @@ function StudentEditor({ token, students, onSaved }) {
   );
 }
 
-export default StudentEditor;
+export default ProfileEditor;

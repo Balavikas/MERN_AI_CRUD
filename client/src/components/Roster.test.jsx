@@ -67,7 +67,7 @@ describe('Roster', () => {
     const user = userEvent.setup();
     render(<Roster id="test" token="director-token" roster={rosters.faculty} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load faculty: Database is down");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load faculty: Something went wrong.");
     await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('table')).toBeInTheDocument();
   });

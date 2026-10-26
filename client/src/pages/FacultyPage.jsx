@@ -3,13 +3,15 @@ import AssignmentForm from '../components/AssignmentForm.jsx';
 import EnrollmentChart from '../components/EnrollmentChart.jsx';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
+import ProfileEditor from '../components/ProfileEditor.jsx';
 import Roster from '../components/Roster.jsx';
-import StudentEditor from '../components/StudentEditor.jsx';
 import useRecords from '../hooks/useRecords.js';
-import { formatDueDate, rosters } from '../data.js';
+import { updateStudent } from '../api.js';
+import { formatDate, formatDueDate, rosters } from '../data.js';
 
 // Faculty dashboard (specs/AfterLogin.md): "Edit student" on the left, "Show all registered students" in the
-// middle, "Add Assignment" on the right; the enrollments bar chart (specs/FacultyDashboard.md) runs full width below.
+// middle, "Add Assignment" with "View your courses" and "View assignments" (specs/AssignmentTab.md) on the right.
+// The enrollments bar chart (specs/FacultyDashboard.md) runs full width below.
 function FacultyPage({ session }) {
   const students = useRecords('/api/students', 'students', session.token);
   const assignments = useRecords('/api/assignments', 'assignments', session.token);
@@ -17,6 +19,18 @@ function FacultyPage({ session }) {
   const myCourses = useRecords('/api/faculty-assignments/mine', 'courses', session.token);
   const [openModal, setOpenModal] = useState('');
   const closeModal = () => setOpenModal('');
+
+  // Refetch on open so a course a director just assigned shows up without reloading the page.
+  function openMyCourses() {
+    myCourses.reload();
+    setOpenModal('my-courses');
+  }
+
+  // Likewise for assignments other faculty posted since the page loaded.
+  function openAssignments() {
+    assignments.reload();
+    setOpenModal('assignments');
+  }
 
   return (
     <>
@@ -35,9 +49,10 @@ function FacultyPage({ session }) {
 
       <section className="section section--tight">
         <div className="container">
-          <div className="row g-4 align-items-start">
+          {/* Rows stretch by default, so with h-100 the three cards share one height (specs/AssignmentTab.md). */}
+          <div className="row g-4">
             <div className="col-12 col-md-6 col-xl-4">
-              <section className="bento-card dashboard__left dashboard__action" aria-labelledby="edit-student-title">
+              <section className="bento-card dashboard__left dashboard__action h-100 justify-content-center" aria-labelledby="edit-student-title">
                 <span className="icon-tile">
                   <Icon name="pen" size={22} />
                 </span>
@@ -53,7 +68,7 @@ function FacultyPage({ session }) {
             </div>
 
             <div className="col-12 col-xl-4 order-first order-xl-0">
-              <section className="bento-card dashboard__center dashboard__action" aria-labelledby="roster-title">
+              <section className="bento-card dashboard__center dashboard__action h-100 justify-content-center" aria-labelledby="roster-title">
                 <span className="icon-tile">
                   <Icon name="users" size={22} />
                 </span>
@@ -73,65 +88,32 @@ function FacultyPage({ session }) {
             </div>
 
             <div className="col-12 col-md-6 col-xl-4">
-              <section className="bento-card dashboard__right" aria-labelledby="assignments-title">
-                <div className="bento-card__head">
-                  <div>
-                    <h2 id="assignments-title">Assignments</h2>
-                    <p>Posted to everyone enrolled in the course.</p>
-                  </div>
+              <section className="bento-card dashboard__right dashboard__action h-100 justify-content-center" aria-labelledby="assignments-title">
+                <span className="icon-tile">
+                  <Icon name="file" size={22} />
+                </span>
+                <div>
+                  <h2 id="assignments-title">Assignments</h2>
+                  <p className="section__sub">
+                    {assignments.status === 'success'
+                      ? `${assignments.records.length} posted so far. Students in the course see them on their dashboard.`
+                      : 'Post work to everyone enrolled in one of your courses.'}
+                  </p>
                 </div>
-                <button type="button" className="btn btn--primary btn--block" onClick={() => setOpenModal('assignment')}>
+                <button type="button" className="btn btn--primary btn--lg" onClick={() => setOpenModal('assignment')}>
                   <Icon name="file" size={18} />
                   Add Assignment
                 </button>
-
-                <div className="dashboard__subsection">
-                  <h3 className="dashboard__subtitle">Courses you teach</h3>
-                  {myCourses.status === 'error' && <p className="field__error">{myCourses.error}</p>}
-                  {myCourses.status === 'success' && myCourses.records.length === 0 && (
-                    <p className="field__hint">None yet. A director assigns faculty to courses before they can post assignments.</p>
-                  )}
-                  {myCourses.records.length > 0 && (
-                    <ul className="my-courses" aria-label="Courses you teach">
-                      {myCourses.records.map((course) => (
-                        <li key={course.id} className="badge-pill">
-                          <Icon name={course.icon} size={14} />
-                          {course.title}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                <div className="dashboard__buttons w-100">
+                  <button type="button" className="btn btn--outline btn--sm" onClick={openMyCourses}>
+                    <Icon name="layers" size={16} />
+                    View your courses
+                  </button>
+                  <button type="button" className="btn btn--outline btn--sm" onClick={openAssignments}>
+                    <Icon name="file" size={16} />
+                    View assignments
+                  </button>
                 </div>
-
-                {assignments.status === 'loading' && <p className="status-message" role="status">Loading assignments…</p>}
-                {assignments.status === 'error' && (
-                  <div className="status-message status-message--error" role="alert">
-                    <p>{assignments.error}</p>
-                    <button type="button" className="btn btn--outline btn--sm" onClick={assignments.reload}>Try again</button>
-                  </div>
-                )}
-                {assignments.status === 'success' && assignments.records.length === 0 && (
-                  <p className="empty-state">No assignments yet. Post the first one.</p>
-                )}
-                {assignments.status === 'success' && assignments.records.length > 0 && (
-                  <ul className="resource-list">
-                    {assignments.records.map((assignment) => (
-                      <li key={assignment.id} className="resource">
-                        <span className="icon-tile icon-tile--sm">
-                          <Icon name={assignment.course_icon} size={18} />
-                        </span>
-                        <div className="resource__text">
-                          <p className="resource__title">{assignment.title}</p>
-                          <p className="resource__meta">
-                            {assignment.course_title}
-                            {assignment.due_date && ` · Due ${formatDueDate(assignment.due_date)}`}
-                            {` · ${assignment.completion_count} done`}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </section>
             </div>
           </div>
@@ -152,11 +134,97 @@ function FacultyPage({ session }) {
         onClose={closeModal}
       >
         {students.status === 'error' && <p className="form-status form-status--error" role="alert">{students.error}</p>}
-        <StudentEditor token={session.token} students={students.records} onSaved={students.reload} />
+        <ProfileEditor
+          token={session.token}
+          people={students.records}
+          label="Student"
+          save={updateStudent}
+          onSaved={students.reload}
+        />
       </Modal>
 
       <Modal id="roster" open={openModal === 'roster'} title="All registered students" wide onClose={closeModal}>
         <Roster id="faculty-roster" token={session.token} roster={rosters.students} />
+      </Modal>
+
+      <Modal
+        id="assignments"
+        open={openModal === 'assignments'}
+        title="Assignments"
+        description="Every posted assignment, newest first, with how many students have finished it."
+        wide
+        onClose={closeModal}
+      >
+        {assignments.status === 'loading' && assignments.records.length === 0 && (
+          <p className="status-message" role="status">Loading assignments…</p>
+        )}
+        {assignments.status === 'error' && (
+          <div className="status-message status-message--error" role="alert">
+            <p>Couldn't load assignments: {assignments.error}</p>
+            <button type="button" className="btn btn--outline btn--sm" onClick={assignments.reload}>Try again</button>
+          </div>
+        )}
+        {assignments.status === 'success' && assignments.records.length === 0 && (
+          <p className="empty-state">No assignments yet. Post the first one with Add Assignment.</p>
+        )}
+        {assignments.records.length > 0 && (
+          <ul className="resource-list" aria-label="Posted assignments">
+            {assignments.records.map((assignment) => (
+              <li key={assignment.id} className="resource">
+                <span className="icon-tile icon-tile--sm">
+                  <Icon name={assignment.course_icon} size={18} />
+                </span>
+                <div className="resource__text">
+                  <p className="resource__title">{assignment.title}</p>
+                  <p className="resource__meta">
+                    {assignment.course_title}
+                    {assignment.due_date && ` · Due ${formatDueDate(assignment.due_date)}`}
+                    {` · ${assignment.completion_count} done`}
+                    {assignment.created_by_name && ` · by ${assignment.created_by_name}`}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Modal>
+
+      <Modal
+        id="my-courses"
+        open={openModal === 'my-courses'}
+        title="Your courses"
+        description="The courses a director has assigned you. You can post assignments to these."
+        onClose={closeModal}
+      >
+        {myCourses.status === 'loading' && myCourses.records.length === 0 && (
+          <p className="status-message" role="status">Loading your courses…</p>
+        )}
+        {myCourses.status === 'error' && (
+          <div className="status-message status-message--error" role="alert">
+            <p>Couldn't load your courses: {myCourses.error}</p>
+            <button type="button" className="btn btn--outline btn--sm" onClick={myCourses.reload}>Try again</button>
+          </div>
+        )}
+        {myCourses.status === 'success' && myCourses.records.length === 0 && (
+          <p className="empty-state">You aren't assigned to any courses yet. A director assigns faculty to courses before they can post assignments.</p>
+        )}
+        {myCourses.records.length > 0 && (
+          <ul className="resource-list" aria-label="Courses you teach">
+            {myCourses.records.map((course) => (
+              <li key={course.id} className="resource">
+                <span className="icon-tile icon-tile--sm">
+                  <Icon name={course.icon} size={18} />
+                </span>
+                <div className="resource__text">
+                  <p className="resource__title">{course.title}</p>
+                  <p className="resource__meta">
+                    {course.category} · {course.level} · {course.duration} · Assigned {formatDate(course.assigned_at)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </Modal>
 
       <Modal

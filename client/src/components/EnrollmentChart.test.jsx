@@ -108,7 +108,7 @@ describe('EnrollmentChart', () => {
       ? { status: 500, body: { error: 'Database is down' } }
       : { body: enrollments }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load enrollments: Database is down");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load enrollments: Something went wrong.");
     await user.click(screen.getByRole('button', { name: 'Try again' }));
 
     expect(await chartRows()).toHaveLength(4);

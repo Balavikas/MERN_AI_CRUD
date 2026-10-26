@@ -151,6 +151,27 @@ app.get('/api/courses', async (_req, res) => {
   }
 });
 
+// Courses that a director has assigned at least one faculty member to, with those faculty names, most-enrolled first.
+// Public: the login page shows them (specs/Root.md). Only names are exposed, never faculty contact details.
+app.get('/api/courses/taught', async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT c.id, c.title, c.category, c.level, c.duration, c.badge, c.icon,
+              array_agg(r.full_name ORDER BY r.full_name) AS faculty_names,
+              (SELECT COUNT(*)::int FROM enrollments e WHERE e.course_id = c.id) AS enrollment_count
+       FROM courses c
+       JOIN faculty_assignments fa ON fa.course_id = c.id
+       JOIN registrations r ON r.id = fa.faculty_id AND r.role = 'faculty'
+       GROUP BY c.id
+       ORDER BY enrollment_count DESC, c.title;`,
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Failed to fetch taught courses:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Student dashboard
 
 app.get('/api/student/courses', requireRole('student'), async (req, res) => {
@@ -298,38 +319,44 @@ app.get('/api/students', requireRole('faculty', 'director'), async (_req, res) =
   }
 });
 
-app.patch('/api/students/:id', requireRole('faculty'), async (req, res) => {
-  const studentId = readId(req.params.id);
-  const values = readFields(req.body, profileFields);
-  const fieldErrors = validateProfile(values);
+// Edit the name, email, phone and education of one account, but only if it has `role`. Shared by faculty editing
+// students and directors editing faculty, so both get the same validation and duplicate checks.
+function updateProfile(role, label) {
+  return async (req, res) => {
+    const accountId = readId(req.params.id);
+    const values = readFields(req.body, profileFields);
+    const fieldErrors = validateProfile(values);
 
-  if (!studentId) {
-    return res.status(404).json({ error: 'That student does not exist.' });
-  }
-  if (Object.keys(fieldErrors).length > 0) {
-    return res.status(400).json({ error: 'Some details need fixing.', fieldErrors });
-  }
+    if (!accountId) {
+      return res.status(404).json({ error: `That ${label} does not exist.` });
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      return res.status(400).json({ error: 'Some details need fixing.', fieldErrors });
+    }
 
-  try {
-    const result = await pool.query(
-      `UPDATE registrations
-       SET full_name = $2, email = $3, phone_number = $4, education = $5
-       WHERE id = $1 AND role = 'student'
-       RETURNING ${publicColumns};`,
-      [studentId, values.fullName.trim(), values.email.trim().toLowerCase(), values.phoneNumber.trim(), values.education],
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'That student does not exist.' });
+    try {
+      const result = await pool.query(
+        `UPDATE registrations
+         SET full_name = $2, email = $3, phone_number = $4, education = $5
+         WHERE id = $1 AND role = $6
+         RETURNING ${publicColumns};`,
+        [accountId, values.fullName.trim(), values.email.trim().toLowerCase(), values.phoneNumber.trim(), values.education, role],
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: `That ${label} does not exist.` });
+      }
+      res.json(result.rows[0]);
+    } catch (error) {
+      if (error.code === '23505') {
+        return sendUniqueViolation(res, error);
+      }
+      console.error(`Failed to update ${label}:`, error);
+      res.status(500).json({ error: error.message });
     }
-    res.json(result.rows[0]);
-  } catch (error) {
-    if (error.code === '23505') {
-      return sendUniqueViolation(res, error);
-    }
-    console.error('Failed to update student:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+  };
+}
+
+app.patch('/api/students/:id', requireRole('faculty'), updateProfile('student', 'student'));
 
 app.get('/api/assignments', requireRole('faculty'), async (_req, res) => {
   try {
@@ -522,6 +549,8 @@ app.post('/api/faculty', requireRole('director'), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+app.patch('/api/faculty/:id', requireRole('director'), updateProfile('faculty', 'faculty member'));
 
 app.delete('/api/faculty/:id', requireRole('director'), async (req, res) => {
   const facultyId = readId(req.params.id);

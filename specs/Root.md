@@ -1,0 +1,2 @@
+-- In the App root page, we are currently Displaying mocked courses on the page
+-- Instead display the real course from database where faculty where Assigned

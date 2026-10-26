@@ -76,6 +76,39 @@ describe('DirectorPage', () => {
     expect(within(dialog).getByRole('searchbox', { name: 'Search faculty' })).toBeInTheDocument();
   });
 
+  it('edits a faculty member from the Faculty card and refreshes the faculty and assignment lists', async () => {
+    let name = 'Fiona Faculty';
+    // Shaped like the API's faculty rows, which always include phone and education.
+    const record = () => ({ ...fiona, full_name: name, phone_number: '+1 555 010 2222', education: 'Postgraduate' });
+    const fetchMock = mockFetch({
+      '/api/faculty': () => ({ body: [record()] }),
+      '/api/courses': { body: [] },
+      '/api/education-breakdown': { body: breakdown },
+      '/api/faculty-assignments': { body: [] },
+      'PATCH /api/faculty/40': (_url, options) => {
+        name = JSON.parse(options.body).fullName;
+        return { body: record() };
+      },
+    });
+    const user = userEvent.setup();
+    render(<DirectorPage session={session} />);
+    const card = screen.getByRole('region', { name: 'Faculty' });
+    await within(card).findByText(/1 teaching on SkillStack/);
+
+    await user.click(within(card).getByRole('button', { name: 'Edit Faculty' }));
+    const dialog = screen.getByRole('dialog', { name: 'Edit Faculty' });
+    await user.selectOptions(within(dialog).getByLabelText('Faculty member'), '40');
+    await user.clear(within(dialog).getByLabelText('Name'));
+    await user.type(within(dialog).getByLabelText('Name'), 'Fiona Teacher');
+    await user.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+
+    expect(await within(dialog).findByText("Saved Fiona Teacher's details.")).toBeInTheDocument();
+    expect(await within(dialog).findByRole('option', { name: 'Fiona Teacher · fiona@example.com' })).toBeInTheDocument();
+    const fetchesOf = (url) => fetchMock.mock.calls.filter(([calledUrl]) => calledUrl === url).length;
+    expect(fetchesOf('/api/faculty')).toBe(2);
+    expect(fetchesOf('/api/faculty-assignments')).toBe(2);
+  });
+
   it('refreshes the assignments after deleting a faculty member, whose assignments go with them', async () => {
     let deleted = false;
     const fetchMock = mockFetch({

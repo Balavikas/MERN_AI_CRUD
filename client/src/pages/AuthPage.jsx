@@ -2,8 +2,9 @@ import { useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import Logo from '../components/Logo.jsx';
 import SignupForm from '../components/SignupForm.jsx';
+import TaughtCourses from '../components/TaughtCourses.jsx';
 import { createAccount, logIn } from '../api.js';
-import { roles, trendingAiCourses } from '../data.js';
+import { roles } from '../data.js';
 
 const modes = {
   login: {
@@ -278,43 +279,7 @@ function AuthPage({ theme, onToggleTheme, onAuthenticated }) {
                 SkillStack helps you build in-demand skills fast and advance your career in a changing job market.
               </p>
 
-              <div className="trending">
-                <div className="trending__head">
-                  <h2 className="trending__title">
-                    <Icon name="zap" size={18} />
-                    Trending AI courses
-                  </h2>
-                  <p className="trending__sub">What everyone's stacking this week</p>
-                </div>
-                <ul className="trending__list row row-cols-1 row-cols-sm-2 g-3">
-                  {trendingAiCourses.map((course) => (
-                    <li key={course.id} className="col">
-                      <div className="trend-card h-100">
-                        <span className="icon-tile icon-tile--sm">
-                          <Icon name={course.icon} size={18} />
-                        </span>
-                        <div className="trend-card__body">
-                          <div className="trend-card__top">
-                            <p className="trend-card__title">{course.title}</p>
-                            <span className={`tag tag--${course.badge.toLowerCase()}`}>{course.badge}</span>
-                          </div>
-                          <p className="trend-card__instructor">with {course.instructor}</p>
-                          <ul className="course-meta" aria-label="Course details">
-                            <li>
-                              <Icon name="clock" size={14} />
-                              {course.duration}
-                            </li>
-                            <li>
-                              <Icon name="chart" size={14} />
-                              {course.level}
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <TaughtCourses />
             </section>
           </div>
         </div>

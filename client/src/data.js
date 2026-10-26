@@ -1,5 +1,10 @@
 export const learner = { firstName: 'Vikas' };
 
+// After this long without a click or key press, a signed-in user is asked whether to continue (specs/Timeout.md).
+export const inactivityTimeoutMs = 7 * 60 * 1000;
+// If they don't answer that dialog within this long, they are logged out and taken back to the login page.
+export const inactivityLogoutGraceMs = 3 * 60 * 1000;
+
 // Course categories used by the filters. The courses themselves live in the Postgres `courses` table (GET /api/courses).
 export const categories = [
   'Gen AI',
@@ -214,44 +219,5 @@ export const footerColumns = [
   {
     title: 'Contact',
     links: [{ label: 'Help center' }, { label: 'Community Discord' }, { label: 'Partner with us' }, { label: 'Send feedback' }],
-  },
-];
-
-export const trendingAiCourses = [
-  {
-    id: 'genai-for-everyone',
-    title: 'Generative AI for Everyone',
-    instructor: 'Dev Mehta',
-    duration: '2h 10m',
-    level: 'Beginner',
-    badge: 'Popular',
-    icon: 'sparkles',
-  },
-  {
-    id: 'prompt-engineering',
-    title: 'Prompt Engineering Essentials',
-    instructor: 'Lena Fischer',
-    duration: '1h 45m',
-    level: 'Beginner',
-    badge: 'New',
-    icon: 'terminal',
-  },
-  {
-    id: 'ai-agents-js',
-    title: 'Build AI Agents with JavaScript',
-    instructor: 'Marcus Lee',
-    duration: '4h 30m',
-    level: 'Intermediate',
-    badge: 'New',
-    icon: 'cpu',
-  },
-  {
-    id: 'ai-data-analysis',
-    title: 'AI-Powered Data Analysis',
-    instructor: 'Aisha Bello',
-    duration: '3h 20m',
-    level: 'Intermediate',
-    badge: 'Popular',
-    icon: 'chart',
   },
 ];

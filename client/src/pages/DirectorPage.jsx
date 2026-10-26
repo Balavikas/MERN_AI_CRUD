@@ -2,19 +2,20 @@ import { lazy, Suspense, useState } from 'react';
 import FacultyAssignments from '../components/FacultyAssignments.jsx';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
+import ProfileEditor from '../components/ProfileEditor.jsx';
 import ReportView from '../components/ReportView.jsx';
 import Roster from '../components/Roster.jsx';
 import SignupForm from '../components/SignupForm.jsx';
 import useRecords from '../hooks/useRecords.js';
-import { createFaculty, deleteFaculty } from '../api.js';
+import { createFaculty, deleteFaculty, updateFaculty } from '../api.js';
 import { rosters } from '../data.js';
 
 // Recharts is large and only directors see this chart, so it loads in its own chunk on first visit.
 const EducationChart = lazy(() => import('../components/EducationChart.jsx'));
 
 // Director dashboard (specs/AfterLogin.md): "Show Registered Students" on the left, "Report" in the middle,
-// "Show Registered Faculty", "Add Faculty" and "Delete Faculty" on the right. Below them, full width: candidates by education
-// level (specs/DirectorsDashboard.md), then course assignments (specs/AssignFaculty.md).
+// "Show Registered Faculty", "Add Faculty", "Edit Faculty" and "Delete Faculty" on the right. Below them, full width:
+// candidates by education level (specs/DirectorsDashboard.md), then course assignments (specs/AssignFaculty.md).
 function DirectorPage({ session }) {
   const faculty = useRecords('/api/faculty', 'faculty', session.token);
   const courses = useRecords('/api/courses', 'courses');
@@ -122,6 +123,10 @@ function DirectorPage({ session }) {
                     <Icon name="userCheck" size={16} />
                     Add Faculty
                   </button>
+                  <button type="button" className="btn btn--outline btn--sm" onClick={() => setOpenModal('edit-faculty')}>
+                    <Icon name="pen" size={16} />
+                    Edit Faculty
+                  </button>
                   <button type="button" className="btn btn--outline btn--sm" onClick={() => setOpenModal('delete')}>
                     <Icon name="x" size={16} />
                     Delete Faculty
@@ -178,6 +183,27 @@ function DirectorPage({ session }) {
           submit={(account) => createFaculty(session.token, account)}
           successMessage={(member) => `Added ${member.full_name}. Share their login details with them.`}
           onCreated={faculty.reload}
+        />
+      </Modal>
+
+      <Modal
+        id="edit-faculty"
+        open={openModal === 'edit-faculty'}
+        title="Edit Faculty"
+        description="Pick a faculty member, change what's wrong, and save."
+        onClose={closeModal}
+      >
+        {faculty.status === 'error' && <p className="form-status form-status--error" role="alert">{faculty.error}</p>}
+        <ProfileEditor
+          token={session.token}
+          people={faculty.records}
+          label="Faculty member"
+          save={updateFaculty}
+          onSaved={() => {
+            faculty.reload();
+            // Assignment rows show the faculty member's name.
+            facultyAssignments.reload();
+          }}
         />
       </Modal>
 

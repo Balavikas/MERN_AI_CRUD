@@ -110,7 +110,7 @@ describe('EducationChart', () => {
     let calls = 0;
     const { user } = renderChart(() => (calls++ === 0 ? { status: 500, body: { error: 'Database is down' } } : { body: breakdown }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load candidates: Database is down");
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load candidates: Something went wrong.");
     await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('figure')).toBeInTheDocument();
   });

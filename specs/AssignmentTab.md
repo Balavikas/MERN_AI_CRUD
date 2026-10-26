@@ -1,0 +1,3 @@
+-- Faculty desk tab, we have Assignments card, Instead of courses you teach section, Create View your course button, when clicked on it a modal should open with the courses that faculty teaches
+-- put all the three card sizes similar
+-- add view assignments button and when clicked on it, display it in a modal
