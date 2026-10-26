@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CourseCarousel Review</title>
+<style>
+  :root {
+    --bg: #ffffff; --surface: #f8fafc; --text: #1e293b; --muted: #64748b; --border: #e2e8f0;
+    --accent: #2563eb; --high: #b42318; --high-bg: #fef3f2; --med: #b54708; --med-bg: #fffaeb;
+    --low: #475467; --low-bg: #f2f4f7; --good: #047857; --good-bg: #ecfdf3; --code-bg: #f1f5f9;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --muted: #94a3b8; --border: #334155;
+      --accent: #60a5fa; --high: #fca5a5; --high-bg: #3b1219; --med: #fcd34d; --med-bg: #3a2a0c;
+      --low: #cbd5e1; --low-bg: #273449; --good: #6ee7b7; --good-bg: #0f2e25; --code-bg: #111c33;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --muted: #94a3b8; --border: #334155;
+    --accent: #60a5fa; --high: #fca5a5; --high-bg: #3b1219; --med: #fcd34d; --med-bg: #3a2a0c;
+    --low: #cbd5e1; --low-bg: #273449; --good: #6ee7b7; --good-bg: #0f2e25; --code-bg: #111c33;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 48px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: clamp(28px, 5vw, 38px); letter-spacing: -0.02em; line-height: 1.15; }
+  h2 { margin: 40px 0 12px; font-size: 20px; }
+  h3 { margin: 0; font-size: 17px; line-height: 1.35; }
+  p { margin: 0 0 10px; }
+  .sub { color: var(--muted); }
+  code { font: 0.88em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre { margin: 10px 0 0; padding: 12px 14px; overflow-x: auto; background: var(--code-bg); border-radius: 8px; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre code { padding: 0; background: none; }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 24px 0 8px; }
+  .count { padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .count strong { display: block; font-size: 26px; line-height: 1.1; }
+  .count span { color: var(--muted); font-size: 13px; }
+  .finding { margin: 0 0 14px; padding: 18px; border: 1px solid var(--border); border-left-width: 4px; border-radius: 12px; background: var(--bg); }
+  .finding.high { border-left-color: var(--high); }
+  .finding.medium { border-left-color: var(--med); }
+  .finding.low { border-left-color: var(--low); }
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 8px; }
+  .tag { padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tag.high { background: var(--high-bg); color: var(--high); }
+  .tag.medium { background: var(--med-bg); color: var(--med); }
+  .tag.low { background: var(--low-bg); color: var(--low); }
+  .loc { color: var(--muted); font-size: 13px; }
+  .label { font-weight: 600; }
+  ul.good { padding: 0; list-style: none; }
+  ul.good li { margin-bottom: 8px; padding: 10px 14px; border-radius: 10px; background: var(--good-bg); }
+  ul.good li::before { content: "✓ "; color: var(--good); font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+  <h1>CourseCarousel review</h1>
+  <p class="sub"><code>client/src/components/CourseCarousel.jsx</code> · the "The hottest right now" course row on Home · reviewed 26 Oct 2026</p>
+
+  <div class="summary">
+    <div class="count"><strong>1</strong><span>High</span></div>
+    <div class="count"><strong>2</strong><span>Medium</span></div>
+    <div class="count"><strong>4</strong><span>Low</span></div>
+  </div>
+
+  <p>The component is small, readable and accessible in the basics. The main problem is that its "Get Started" button belongs to an older, front-end-only version of the app and is not connected to the real enrollments the app now stores.</p>
+
+  <h2>Findings</h2>
+
+  <article class="finding high">
+    <div class="head"><span class="tag high">High</span><h3>"Get Started" is not connected to real enrollments</h3></div>
+    <p class="loc">Lines 65, 84–94 · with <code>App.jsx</code> <code>toggleStarted</code></p>
+    <p>"Started" comes from <code>startedCourseIds</code>, an in-memory list in <code>App.jsx</code>. It is never saved, it resets on logout or reload, and it has nothing to do with the <code>enrollments</code> table. So:</p>
+    <ul>
+      <li>A student taking a course (it appears under "Courses I'm taking") still sees <strong>Get Started</strong> for it here.</li>
+      <li>Clicking <strong>Get Started</strong> does not enroll them; the course never reaches their dashboard.</li>
+      <li>Faculty and directors see the same button, though it means nothing for their roles.</li>
+    </ul>
+    <p><span class="label">Suggestion:</span> for students, pass the enrolled course IDs (from <code>GET /api/student/courses</code>) and have the button call <code>enrollInCourse</code>, showing "Enrolled" afterwards. Hide the button for other roles. Then remove <code>startedCourseIds</code> / <code>toggleStarted</code> from <code>App.jsx</code>.</p>
+  </article>
+
+  <article class="finding medium">
+    <div class="head"><span class="tag medium">Medium</span><h3>Scroll arrows show and do nothing when there is no carousel</h3></div>
+    <p class="loc">Lines 39–44, 10–15</p>
+    <p>The left and right buttons always render. While loading, on error, or when filters match nothing, <code>trackRef.current</code> is <code>null</code>, so clicking them silently does nothing. They also stay enabled at the start and end of the row.</p>
+    <p><span class="label">Suggestion:</span> render the arrows only when the list is showing (<code>catalog.status === 'success' &amp;&amp; courses.length &gt; 0</code>). Optionally track <code>scrollLeft</code> on the track's <code>scroll</code> event and disable the arrow that can't move.</p>
+  </article>
+
+  <article class="finding medium">
+    <div class="head"><span class="tag medium">Medium</span><h3>Empty state blames filters even when there are no courses</h3></div>
+    <p class="loc">Lines 55–61</p>
+    <p>Now that courses come from the database, the catalog can be empty. In that case the user sees "Nothing matches that combo. Loosen the filters" and a "Show me everything" button that changes nothing, even with no filters set.</p>
+    <p><span class="label">Suggestion:</span> branch on <code>hasFilters</code>:</p>
+<pre><code>{hasFilters ? (
+  /* current "Nothing matches that combo" + Show me everything */
+) : (
+  &lt;p className="empty-state"&gt;No courses yet. Check back soon.&lt;/p&gt;
+)}</code></pre>
+  </article>
+
+  <article class="finding low">
+    <div class="head"><span class="tag low">Low</span><h3>Card gap is hard-coded in two places</h3></div>
+    <p class="loc">Line 16 · <code>styles.css</code> <code>.carousel { gap: 20px }</code></p>
+    <p>The scroll step adds a literal <code>20</code> that has to match the CSS gap. If the gap changes, each arrow click drifts off the card edge. (Scroll snapping hides most of this today.)</p>
+<pre><code>const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+const step = card ? card.getBoundingClientRect().width + gap : track.clientWidth * 0.8;</code></pre>
+  </article>
+
+  <article class="finding low">
+    <div class="head"><span class="tag low">Low</span><h3>Toggle button changes its label and its pressed state</h3></div>
+    <p class="loc">Lines 89–90</p>
+    <p>The button uses <code>aria-pressed</code> and also swaps its accessible name between "Get Started with X" and "Started X". Screen readers then announce, for example, "Started MERN, toggle button, pressed", which repeats the state. A toggle should keep one name and let <code>aria-pressed</code> carry the state.</p>
+    <p><span class="label">Suggestion:</span> use a fixed <code>aria-label={`Start ${course.title}`}</code>. If finding 1 turns this into an "Enroll" action, drop <code>aria-pressed</code> and disable the button once enrolled.</p>
+  </article>
+
+  <article class="finding low">
+    <div class="head"><span class="tag low">Low</span><h3>"Try again" hides the list and the subtitle reads "0 of 0"</h3></div>
+    <p class="loc">Lines 27–29, 48, 55</p>
+    <p><code>useRecords</code> keeps the old records but sets <code>status</code> to <code>'loading'</code> on reload. This component only renders the list on <code>'success'</code>, so any reload blanks the row. While the first load is running with filters active, the subtitle says "Showing 0 of 0 courses".</p>
+    <p><span class="label">Suggestion:</span> render the list whenever <code>catalog.records.length &gt; 0</code> and show the loading message only when there are no records yet. Show the "Showing X of Y" text only after a successful load.</p>
+  </article>
+
+  <article class="finding low">
+    <div class="head"><span class="tag low">Low</span><h3>Indentation inside the <code>map</code></h3></div>
+    <p class="loc">Lines 66–98</p>
+    <p>The returned <code>&lt;li&gt;</code> sits at the same indentation as <code>return (</code>, which makes the block hard to scan. The <code>started</code> variable could also move into a small <code>CourseCard</code> component, letting the map be <code>courses.map((course) =&gt; &lt;CourseCard … /&gt;)</code>.</p>
+  </article>
+
+  <h2>What's working well</h2>
+  <ul class="good">
+    <li>Loading, error (with retry) and empty states are all handled, with <code>role="status"</code> / <code>role="alert"</code> for screen readers.</li>
+    <li>Arrow scrolling respects reduced-motion settings through <code>scrollBehavior()</code>.</li>
+    <li>The section is labelled by its heading, the list has an <code>aria-label</code>, and icon-only arrows have text labels.</li>
+    <li>Stable <code>id</code>s (<code>course-…</code>, <code>course-…-cta</code>) let "Resume" scroll to and focus a specific card.</li>
+    <li>Course art is shared with the picker through <code>CourseArt</code>, so the two stay consistent.</li>
+  </ul>
+</main>
+</body>
+</html>
