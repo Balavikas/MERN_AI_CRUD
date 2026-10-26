@@ -1,1 +1,2 @@
 -- Now when the user is Registered and If he comes back to the site and Clicks on Login Tab and Enter the same credentials which he used for the Registration, The Login should work, If his credentials are wrong we are not going him to Login to our site, We will display Invalid Credentials or No Email Id Associated based on what user has entered
+-- Keep the user signed in after a browser refresh when "Keep me logged in" is selected, and clear the saved session when the user logs out

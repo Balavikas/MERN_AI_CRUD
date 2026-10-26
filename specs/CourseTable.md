@@ -1,0 +1,4 @@
+-- add the courses database table and add 10 latest Gen Ai and Agentic AI courses
+-- when displaying it on the frontend add a relatable Images icons for those courses
+-- when students clicks on the add the courses, it should display all the courses we have in the database (Do not show the courses which he is already taking)
+-- Once he has choosen a course, that course should be added to the enrollments table (Also should be displayed on courses I am taking)

@@ -134,6 +134,36 @@ const icons = {
       <path d="M9.75 15.02l5.75-3.27-5.75-3.27v6.54z" />
     </>
   ),
+  // Course icons for the Gen AI and Agentic AI catalog (server/migrations/003_courses.sql).
+  brain: (
+    <path d="M9.5 2A2.5 2.5 0 0 0 7 4.5v.5a3 3 0 0 0-3 3 3 3 0 0 0 1 2.24A3 3 0 0 0 4 12.5a3 3 0 0 0 3 3v1A2.5 2.5 0 0 0 9.5 19 2.5 2.5 0 0 0 12 16.5v-12A2.5 2.5 0 0 0 9.5 2zM14.5 2A2.5 2.5 0 0 1 17 4.5v.5a3 3 0 0 1 3 3 3 3 0 0 1-1 2.24 3 3 0 0 1 1 2.26 3 3 0 0 1-3 3v1a2.5 2.5 0 0 1-2.5 2.5 2.5 2.5 0 0 1-2.5-2.5M12 22v-3" />
+  ),
+  messageSquare: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM8 9h8M8 13h5" />,
+  fileSearch: (
+    <>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h5M14 2v6h6M14 2l6 6v3" />
+      <circle cx="16.5" cy="16.5" r="3" />
+      <path d="M21 21l-2.4-2.4" />
+    </>
+  ),
+  gauge: <path d="M12 14l4-4M3.34 19a10 10 0 1 1 17.32 0" />,
+  bot: (
+    <>
+      <rect x="3" y="8" width="18" height="12" rx="2" />
+      <path d="M12 8V4M9 13v2M15 13v2M1 13v3M23 13v3" />
+      <circle cx="12" cy="3" r="1" />
+    </>
+  ),
+  plug: <path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0V8zM12 17v5" />,
+  network: (
+    <>
+      <circle cx="12" cy="5" r="3" />
+      <circle cx="5" cy="19" r="3" />
+      <circle cx="19" cy="19" r="3" />
+      <path d="M10.6 7.7l-4.2 8.6M13.4 7.7l4.2 8.6M8 19h8" />
+    </>
+  ),
+  shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4" />,
 };
 
 function Icon({ name, size = 20, className }) {

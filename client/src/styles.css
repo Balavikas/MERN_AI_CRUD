@@ -139,7 +139,9 @@ a {
 
 .container {
   width: min(1240px, calc(100% - 32px));
+  max-width: none;
   margin-inline: auto;
+  padding-inline: 0;
 }
 
 .app-shell,
@@ -225,6 +227,12 @@ a {
 
 .btn--outline:hover:not(:disabled) {
   background: var(--surface);
+}
+
+/* Fixed red so white text stays readable in both themes. */
+.btn--danger {
+  background: #b42318;
+  color: #ffffff;
 }
 
 .btn--sm {
@@ -597,21 +605,6 @@ a {
   padding: 56px 0 24px;
 }
 
-.hero__grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  align-items: center;
-  gap: 32px;
-}
-
-.hero__main {
-  grid-column: span 7;
-}
-
-.hero__aside {
-  grid-column: span 5;
-}
-
 .hero__title,
 .page-head__title {
   margin: 20px 0 16px;
@@ -739,9 +732,6 @@ a {
 }
 
 .section__head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -868,6 +858,70 @@ a {
   font-size: 14px;
 }
 
+.course-card__description {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Category tints for the course art; mixed with --bg so they hold up in light and dark themes. */
+.course-card__art[data-category] {
+  --course-tint: var(--accent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--course-tint) 22%, var(--bg)),
+    color-mix(in srgb, var(--course-tint) 6%, var(--bg))
+  );
+}
+
+.course-card__art[data-category='Gen AI'] {
+  --course-tint: #8b5cf6;
+}
+
+.course-card__art[data-category='Agentic AI'] {
+  --course-tint: #14b8a6;
+}
+
+.course-card__art[data-category='UI/UX'] {
+  --course-tint: #ec4899;
+}
+
+.course-card__art[data-category='Backend'] {
+  --course-tint: #22c55e;
+}
+
+.course-card__art[data-category='Data & AI'] {
+  --course-tint: #f59e0b;
+}
+
+.course-card__art[data-category='Cloud & DevOps'] {
+  --course-tint: #0ea5e9;
+}
+
+.course-card__art[data-category='Mobile'] {
+  --course-tint: #f97316;
+}
+
+.course-card__art--compact {
+  height: 104px;
+}
+
+.course-card__art--compact .course-card__icon {
+  width: 52px;
+  height: 52px;
+}
+
+.course-picker {
+  padding: 0;
+  list-style: none;
+}
+
+/* Picker cards sit in a grid, not the carousel, so they take their column's width and don't grow on hover. */
+.course-card--picker,
+.course-card--picker:hover {
+  transform: none;
+}
+
 .course-card__footer {
   display: flex;
   align-items: center;
@@ -896,15 +950,6 @@ a {
 
 /* ---------- Bento ---------- */
 
-.bento {
-  display: grid;
-  grid-template-areas:
-    'crew crew join'
-    'resources gallery join';
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-}
-
 .bento-card {
   display: flex;
   min-width: 0;
@@ -915,22 +960,6 @@ a {
   border-radius: var(--radius-3xl);
   background: var(--bg);
   box-shadow: var(--shadow-sm);
-}
-
-.bento-card--crew {
-  grid-area: crew;
-}
-
-.bento-card--join {
-  grid-area: join;
-}
-
-.bento-card--resources {
-  grid-area: resources;
-}
-
-.bento-card--gallery {
-  grid-area: gallery;
 }
 
 .bento-card__head {
@@ -954,10 +983,6 @@ a {
 }
 
 .stat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -1150,10 +1175,6 @@ a {
 /* ---------- Gallery ---------- */
 
 .gallery {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -1217,18 +1238,9 @@ a {
   padding: 48px 0 24px;
 }
 
+/* Direction and alignment come from Bootstrap flex utilities in the markup. */
 .page-head__inner {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
   gap: 24px;
-}
-
-.toolkit-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  align-items: start;
-  gap: 20px;
 }
 
 .segmented {
@@ -1271,9 +1283,6 @@ a {
 /* ---------- Records table ---------- */
 
 .records__head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -1366,6 +1375,104 @@ tbody tr:last-child td {
   font-weight: 600;
 }
 
+/* ---------- Role dashboards ---------- */
+
+.dashboard__action {
+  align-items: center;
+  text-align: center;
+}
+
+.dashboard__action h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.dashboard__center.dashboard__action {
+  padding: 36px 24px;
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.dashboard__subsection {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard__subtitle {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard__buttons .btn {
+  flex: 1 1 auto;
+}
+
+.input--textarea {
+  height: auto;
+  min-height: 96px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.search--block {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+/* ---------- Modal ---------- */
+
+.modal {
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-3xl);
+  background: var(--bg);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+}
+
+.modal--wide {
+  width: min(1040px, calc(100% - 32px));
+}
+
+.modal::backdrop {
+  background: rgb(15 23 42 / 55%);
+  backdrop-filter: blur(2px);
+}
+
+.modal__body {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+}
+
+.modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal__head h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.modal .records h2 {
+  font-size: 18px;
+}
+
 /* ---------- Footer ---------- */
 
 .site-footer {
@@ -1373,12 +1480,6 @@ tbody tr:last-child td {
   padding-top: 56px;
   border-top: 1px solid var(--border);
   background: var(--surface);
-}
-
-.footer-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
-  gap: 32px;
 }
 
 .footer-brand__tagline {
@@ -1474,12 +1575,10 @@ tbody tr:last-child td {
   justify-content: space-between;
 }
 
-.auth__grid {
+.auth__main {
   display: grid;
   flex: 1;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  align-items: center;
-  gap: 56px;
+  align-content: center;
   padding: 56px 0;
 }
 
@@ -1525,10 +1624,6 @@ tbody tr:last-child td {
 }
 
 .trending__list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -1752,51 +1847,17 @@ tbody tr:last-child td {
 
 /* ---------- Responsive ---------- */
 
-@media (max-width: 1100px) {
+/* Page layouts use Bootstrap's grid (row / col-*) in the markup. These rules cover what the grid can't:
+   the sticky nav bar, component spacing and type sizes. Breakpoints match Bootstrap's (576, 768, 992, 1200). */
+
+@media (max-width: 1199.98px) {
   .search {
     width: 320px;
   }
-
-  .bento {
-    grid-template-areas:
-      'crew crew'
-      'join resources'
-      'join gallery';
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
-@media (max-width: 960px) {
-  .auth__grid {
-    grid-template-columns: minmax(0, 1fr);
-    align-content: start;
-    gap: 32px;
-    padding: 32px 0;
-  }
-
-  .hero__grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .hero__main,
-  .hero__aside {
-    grid-column: 1 / -1;
-  }
-
-  .toolkit-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .footer-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .footer-brand {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 760px) {
+/* Below lg the nav tabs get their own scrollable row and the search bar takes the full width under them. */
+@media (max-width: 991.98px) {
   .subnav__inner {
     flex-wrap: wrap;
     gap: 8px 16px;
@@ -1804,7 +1865,7 @@ tbody tr:last-child td {
   }
 
   .nav-links {
-    width: 100%;
+    width: calc(100% + 32px);
     margin: 0 -16px;
     padding: 4px 16px 10px;
     overflow-x: auto;
@@ -1818,41 +1879,49 @@ tbody tr:last-child td {
 
   .search {
     width: auto;
+    min-width: 0;
     flex: 1;
   }
 
-  .bento {
-    grid-template-areas:
-      'crew'
-      'join'
-      'resources'
-      'gallery';
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .page-head__inner,
-  .section__head,
-  .records__head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .hero {
-    padding-top: 32px;
+  .auth__main {
+    align-content: start;
+    padding: 32px 0;
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 767.98px) {
+  .hero {
+    padding-top: 32px;
+  }
+
+  .page-head {
+    padding-top: 32px;
+  }
+
+  .section {
+    padding: 32px 0;
+  }
+
+  .section--tight {
+    padding-top: 8px;
+  }
+}
+
+@media (max-width: 575.98px) {
   .auth-card {
     padding: 20px;
   }
 
-  .trending__list {
-    grid-template-columns: minmax(0, 1fr);
+  .modal__body {
+    padding: 18px;
   }
 
   .btn--contrast {
     padding: 0 12px;
+  }
+
+  .header-actions {
+    gap: 8px;
   }
 
   .logo__img {
@@ -1871,30 +1940,38 @@ tbody tr:last-child td {
     flex: 1 1 100%;
   }
 
-  .footer-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .hero__lead {
+    font-size: 16px;
+  }
+
+  .dashboard__buttons .btn {
+    flex-basis: 100%;
+  }
+
+  /* Row actions drop under the text, lined up with it (40px icon + 12px gap). */
+  .resource {
+    flex-wrap: wrap;
+  }
+
+  .resource__text {
+    flex-basis: calc(100% - 52px);
+  }
+
+  .resource .btn {
+    margin-left: 52px;
   }
 
   th,
   td {
     padding: 14px;
   }
-}
 
-@media (max-width: 400px) {
   .stat {
     padding: 12px;
   }
 
   .stat__value {
     font-size: 26px;
-  }
-
-}
-
-@media (max-width: 340px) {
-  .stat-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

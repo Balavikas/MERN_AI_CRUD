@@ -1,8 +1,10 @@
 import { useRef } from 'react';
+import CourseArt from './CourseArt.jsx';
 import Icon from './Icon.jsx';
 import { scrollBehavior } from '../utils/motion.js';
 
-function CourseCarousel({ courses, totalCount, hasFilters, startedCourseIds, onClearFilters, onGetStarted }) {
+// `catalog` is the useRecords result for GET /api/courses; `courses` is the filtered subset to show.
+function CourseCarousel({ catalog, courses, hasFilters, startedCourseIds, onClearFilters, onGetStarted }) {
   const trackRef = useRef(null);
 
   function scrollByCard(direction) {
@@ -18,12 +20,12 @@ function CourseCarousel({ courses, totalCount, hasFilters, startedCourseIds, onC
   return (
     <section className="section" id="courses" aria-labelledby="courses-title">
       <div className="container">
-        <div className="section__head">
+        <div className="section__head d-flex flex-column flex-md-row align-items-start align-items-md-end justify-content-between">
           <div>
             <h2 id="courses-title">The hottest right now</h2>
             <p className="section__sub">
               {hasFilters
-                ? `Showing ${courses.length} of ${totalCount} courses that match your vibe.`
+                ? `Showing ${courses.length} of ${catalog.records.length} courses that match your vibe.`
                 : 'What the crew is shipping with this week. Short, sharp, zero filler.'}
             </p>
           </div>
@@ -43,7 +45,14 @@ function CourseCarousel({ courses, totalCount, hasFilters, startedCourseIds, onC
           </div>
         </div>
 
-        {courses.length === 0 ? (
+        {catalog.status === 'loading' && <p className="status-message" role="status">Loading courses…</p>}
+        {catalog.status === 'error' && (
+          <div className="status-message status-message--error" role="alert">
+            <p>Couldn't load courses: {catalog.error}</p>
+            <button type="button" className="btn btn--outline btn--sm" onClick={catalog.reload}>Try again</button>
+          </div>
+        )}
+        {catalog.status === 'success' && (courses.length === 0 ? (
           <div className="empty-state">
             <p>Nothing matches that combo. Loosen the filters and try again.</p>
             <button type="button" className="btn btn--primary btn--sm" onClick={onClearFilters}>
@@ -56,12 +65,7 @@ function CourseCarousel({ courses, totalCount, hasFilters, startedCourseIds, onC
               const started = startedCourseIds.includes(course.id);
               return (
               <li key={course.id} className="course-card" id={`course-${course.id}`}>
-                <div className="course-card__art">
-                  <span className="course-card__icon">
-                    <Icon name={course.icon} size={28} />
-                  </span>
-                  <span className={`tag tag--${course.badge.toLowerCase()}`}>{course.badge}</span>
-                </div>
+                <CourseArt course={course} />
                 <div className="course-card__body">
                   <p className="course-card__category">{course.category}</p>
                   <h3 className="course-card__title">{course.title}</h3>
@@ -94,7 +98,7 @@ function CourseCarousel({ courses, totalCount, hasFilters, startedCourseIds, onC
               );
             })}
           </ul>
-        )}
+        ))}
       </div>
     </section>
   );

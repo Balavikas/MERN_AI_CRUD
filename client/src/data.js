@@ -1,92 +1,26 @@
 export const learner = { firstName: 'Vikas' };
 
-export const categories = ['Web Development', 'UI/UX', 'Backend', 'Data & AI', 'Cloud & DevOps', 'Mobile'];
+// Course categories used by the filters. The courses themselves live in the Postgres `courses` table (GET /api/courses).
+export const categories = [
+  'Gen AI',
+  'Agentic AI',
+  'Web Development',
+  'UI/UX',
+  'Backend',
+  'Data & AI',
+  'Cloud & DevOps',
+  'Mobile',
+];
 
 export const levels = ['Beginner', 'Intermediate', 'Advanced'];
 
 export const educationLevels = ['Self-taught', 'High school', 'Bootcamp', 'Undergraduate', 'Postgraduate'];
 
-export const courses = [
-  {
-    id: 'mern-zero-to-shipped',
-    title: 'MERN: Zero to Shipped',
-    instructor: 'Priya Raman',
-    category: 'Web Development',
-    duration: '6h 40m',
-    level: 'Beginner',
-    badge: 'Popular',
-    icon: 'layers',
-  },
-  {
-    id: 'react-patterns',
-    title: 'React Patterns, No BS',
-    instructor: 'Marcus Lee',
-    category: 'Web Development',
-    duration: '4h 15m',
-    level: 'Intermediate',
-    badge: 'New',
-    icon: 'code',
-  },
-  {
-    id: 'figma-to-frontend',
-    title: 'Figma to Front-end in a Weekend',
-    instructor: 'Ana Souza',
-    category: 'UI/UX',
-    duration: '3h 30m',
-    level: 'Beginner',
-    badge: 'Popular',
-    icon: 'pen',
-  },
-  {
-    id: 'mongodb-crash-course',
-    title: 'MongoDB Schemas That Make Sense',
-    instructor: 'Lena Fischer',
-    category: 'Backend',
-    duration: '2h 55m',
-    level: 'Beginner',
-    badge: 'New',
-    icon: 'database',
-  },
-  {
-    id: 'prompt-to-product',
-    title: 'Prompt to Product with AI',
-    instructor: 'Dev Mehta',
-    category: 'Data & AI',
-    duration: '2h 50m',
-    level: 'Intermediate',
-    badge: 'New',
-    icon: 'cpu',
-  },
-  {
-    id: 'docker-cloud',
-    title: 'Ship to the Cloud with Docker',
-    instructor: 'Tomás Rivera',
-    category: 'Cloud & DevOps',
-    duration: '4h 40m',
-    level: 'Intermediate',
-    badge: 'Popular',
-    icon: 'cloud',
-  },
-  {
-    id: 'design-systems',
-    title: 'Design Systems That Scale',
-    instructor: 'Jonah Kim',
-    category: 'UI/UX',
-    duration: '5h 05m',
-    level: 'Advanced',
-    badge: 'Popular',
-    icon: 'sparkles',
-  },
-  {
-    id: 'react-native',
-    title: 'React Native: Pocket-Sized Apps',
-    instructor: 'Aisha Bello',
-    category: 'Mobile',
-    duration: '5h 20m',
-    level: 'Advanced',
-    badge: 'New',
-    icon: 'smartphone',
-  },
+// Keep these ids in sync with `roles` in server/auth.js.
+export const roles = [
+  { id: 'student', label: 'Student' },
+  { id: 'faculty', label: 'Faculty' },
+  { id: 'director', label: 'Director' },
 ];
 
 export const continueLearning = {
@@ -111,6 +45,16 @@ export const contactColumns = [
 ];
 
 const joinedDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
+// Due dates arrive as plain YYYY-MM-DD, which Date parses as UTC midnight, so format them in UTC too.
+const dueDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
+
+export function formatDate(value) {
+  return value ? joinedDate.format(new Date(value)) : '';
+}
+
+export function formatDueDate(value) {
+  return value ? dueDate.format(new Date(value)) : '';
+}
 
 export const learnerColumns = [
   { key: 'id', label: 'ID' },
@@ -118,8 +62,15 @@ export const learnerColumns = [
   { key: 'email', label: 'Email' },
   { key: 'phone_number', label: 'Phone' },
   { key: 'education', label: 'Education' },
-  { key: 'created_at', label: 'Joined', format: (value) => (value ? joinedDate.format(new Date(value)) : '') },
+  { key: 'created_at', label: 'Joined', format: formatDate },
 ];
+
+export const studentColumns = [
+  ...learnerColumns,
+  { key: 'course_count', label: 'Courses' },
+];
+
+export const facultyColumns = learnerColumns;
 
 export const resources = [
   {

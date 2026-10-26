@@ -22,8 +22,10 @@ function Header({ theme, onToggleTheme, onHome, onJoin, onLogOut }) {
           <button type="button" className="icon-btn" onClick={onLogOut} aria-label="Log out">
             <Icon name="logOut" />
           </button>
-          <button type="button" className="btn btn--contrast" onClick={onJoin}>
-            Join Now
+          {/* On phones the label gives way to an icon so the header fits on one line. */}
+          <button type="button" className="btn btn--contrast" onClick={onJoin} aria-label="Join Now">
+            <Icon name="sparkles" size={18} className="d-sm-none" />
+            <span className="d-none d-sm-inline">Join Now</span>
           </button>
         </div>
       </div>

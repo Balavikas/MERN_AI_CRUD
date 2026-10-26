@@ -2,7 +2,7 @@ import Icon from './Icon.jsx';
 
 function Gallery({ items }) {
   return (
-    <ul className="gallery">
+    <ul className="gallery row row-cols-2 row-cols-sm-3 g-2">
       {items.map((project) => (
         <li key={project.id}>
           <figure className={`gallery__tile gallery__tile--${project.tint}`}>

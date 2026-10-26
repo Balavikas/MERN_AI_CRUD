@@ -1,5 +1,9 @@
-export async function fetchRecords(endpoint, recordLabel, signal) {
-  const response = await fetch(endpoint, { signal });
+function authHeaders(token) {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function fetchRecords(endpoint, recordLabel, signal, token) {
+  const response = await fetch(endpoint, { signal, headers: authHeaders(token) });
   const result = await response.json();
 
   if (!response.ok) {
@@ -18,13 +22,13 @@ export class ApiError extends Error {
   }
 }
 
-async function postJson(endpoint, body, fallbackError) {
+async function sendJson(method, endpoint, body, fallbackError, token) {
   let response;
   try {
     response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      method,
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
     throw new ApiError("Couldn't reach SkillStack. Check your connection and try again.");
@@ -39,9 +43,37 @@ async function postJson(endpoint, body, fallbackError) {
 }
 
 export function createAccount(account) {
-  return postJson('/api/registrations', account, 'Could not create your account. Give it another shot.');
+  return sendJson('POST', '/api/registrations', account, 'Could not create your account. Give it another shot.');
 }
 
 export function logIn(credentials) {
-  return postJson('/api/login', credentials, 'Could not log you in. Give it another shot.');
+  return sendJson('POST', '/api/login', credentials, 'Could not log you in. Give it another shot.');
+}
+
+export function enrollInCourse(token, courseId) {
+  return sendJson('POST', '/api/student/courses', { courseId }, 'Could not add that course.', token);
+}
+
+export function completeAssignment(token, assignmentId) {
+  return sendJson('POST', `/api/student/assignments/${assignmentId}/complete`, undefined, 'Could not mark that done.', token);
+}
+
+export function updateStudent(token, studentId, profile) {
+  return sendJson('PATCH', `/api/students/${studentId}`, profile, 'Could not save that student.', token);
+}
+
+export function createAssignment(token, assignment) {
+  return sendJson('POST', '/api/assignments', assignment, 'Could not post that assignment.', token);
+}
+
+export function createFaculty(token, account) {
+  return sendJson('POST', '/api/faculty', account, 'Could not add that faculty member.', token);
+}
+
+export function deleteFaculty(token, facultyId) {
+  return sendJson('DELETE', `/api/faculty/${facultyId}`, undefined, 'Could not remove that faculty member.', token);
+}
+
+export function fetchReport(token) {
+  return sendJson('GET', '/api/report', undefined, 'Could not build the report.', token);
 }

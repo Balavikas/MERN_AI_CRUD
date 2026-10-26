@@ -9,8 +9,8 @@ function matchesQuery(record, columns, query) {
   return columns.some((column) => String(cellValue(record, column) ?? '').toLowerCase().includes(query));
 }
 
-function RecordsView({ endpoint, source, title, description, recordLabel, columns, getRowKey, query }) {
-  const { records, status, error, reload } = useRecords(endpoint, recordLabel);
+function RecordsView({ endpoint, source, title, description, recordLabel, columns, getRowKey, query, token }) {
+  const { records, status, error, reload } = useRecords(endpoint, recordLabel, token);
   const headingId = `${recordLabel}-heading`;
   const normalizedQuery = query.trim().toLowerCase();
   const visibleRecords = normalizedQuery
@@ -19,7 +19,7 @@ function RecordsView({ endpoint, source, title, description, recordLabel, column
 
   return (
     <section className="records" aria-labelledby={headingId}>
-      <div className="records__head">
+      <div className="records__head d-flex flex-column flex-md-row align-items-start align-items-md-end justify-content-between">
         <div>
           <p className="kicker">{source}</p>
           <h2 id={headingId}>{title}</h2>

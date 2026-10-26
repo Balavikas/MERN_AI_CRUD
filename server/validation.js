@@ -9,7 +9,8 @@ const passwordRules = [
   { label: 'at least 1 special character', test: (password) => /[^A-Za-z0-9\s]/.test(password) },
 ];
 
-function validateSignup(values) {
+// Name, email, phone and education: shared by sign-up and the faculty "Edit student" form.
+function validateProfile(values) {
   const errors = {};
   const fullName = values.fullName.trim();
   const phoneDigits = values.phoneNumber.replace(/\D/g, '');
@@ -36,6 +37,11 @@ function validateSignup(values) {
     errors.education = 'Pick an education level from the list.';
   }
 
+  return errors;
+}
+
+function validateSignup(values) {
+  const errors = validateProfile(values);
   const missingRules = passwordRules.filter((rule) => !rule.test(values.password));
   if (!values.password) {
     errors.password = 'Password is required.';
@@ -52,4 +58,26 @@ function validateSignup(values) {
   return errors;
 }
 
-module.exports = { educationLevels, passwordRules, validateSignup };
+// The course itself is checked by the database: assignments.course_id references courses.id.
+function validateAssignment(values) {
+  const errors = {};
+
+  if (!values.courseId) {
+    errors.courseId = 'Pick a course from the list.';
+  }
+  if (!values.title.trim()) {
+    errors.title = 'Give the assignment a title.';
+  } else if (values.title.trim().length > 120) {
+    errors.title = 'Keep the title under 120 characters.';
+  }
+  if (values.description.length > 2000) {
+    errors.description = 'Keep the description under 2000 characters.';
+  }
+  if (values.dueDate && (!/^\d{4}-\d{2}-\d{2}$/.test(values.dueDate) || Number.isNaN(Date.parse(values.dueDate)))) {
+    errors.dueDate = 'Use a real date.';
+  }
+
+  return errors;
+}
+
+module.exports = { educationLevels, passwordRules, validateProfile, validateSignup, validateAssignment };

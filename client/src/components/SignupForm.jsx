@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import Icon from './Icon.jsx';
 import { createAccount } from '../api.js';
-import { educationLevels } from '../data.js';
+import { educationLevels, roles } from '../data.js';
 import { passwordRules, validateSignup } from '../validation.js';
 
 const emptyForm = {
+  role: roles[0].id,
   fullName: '',
   email: '',
   phoneNumber: '',
@@ -16,7 +17,17 @@ const emptyForm = {
 const fieldOrder = Object.keys(emptyForm);
 
 // Creates a row in the Postgres registrations table. `idPrefix` keeps ids unique when the form appears twice.
-function SignupForm({ idPrefix, submitLabel, onCreated, successMessage }) {
+// `submit` defaults to public sign-up; the director dashboard passes one that creates faculty instead.
+// `showRole` adds the role dropdown; without it the account is a student.
+function SignupForm({
+  idPrefix,
+  showRole = false,
+  submitLabel,
+  submittingLabel = 'Creating your account…',
+  onCreated,
+  successMessage,
+  submit = createAccount,
+}) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle');
@@ -61,7 +72,7 @@ function SignupForm({ idPrefix, submitLabel, onCreated, successMessage }) {
 
     setStatus('submitting');
     try {
-      const account = await createAccount(form);
+      const account = await submit(form);
       setStatus('success');
       setForm(emptyForm);
       setShowPassword(false);
@@ -113,6 +124,21 @@ function SignupForm({ idPrefix, submitLabel, onCreated, successMessage }) {
 
   return (
     <form className="form" onSubmit={handleSubmit} noValidate>
+      {showRole && (
+        <div className="field">
+          <label htmlFor={fieldId('role')}>Sign up as</label>
+          <div className="select">
+            <select {...fieldProps('role')} className="input">
+              {roles.map((role) => (
+                <option key={role.id} value={role.id}>{role.label}</option>
+              ))}
+            </select>
+            <Icon name="chevronDown" size={18} className="select__icon" />
+          </div>
+          {renderError('role')}
+        </div>
+      )}
+
       <div className="field">
         <label htmlFor={fieldId('fullName')}>Your name</label>
         <div className="input-icon">
@@ -218,7 +244,7 @@ function SignupForm({ idPrefix, submitLabel, onCreated, successMessage }) {
       </div>
 
       <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={status === 'submitting'}>
-        {status === 'submitting' ? 'Creating your account…' : submitLabel}
+        {status === 'submitting' ? submittingLabel : submitLabel}
         {status !== 'submitting' && <Icon name="arrowRight" size={18} />}
       </button>
 

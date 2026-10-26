@@ -36,15 +36,17 @@ function CrewStats({ learners, mentors }) {
   ];
 
   return (
-    <ul className="stat-grid">
+    <ul className="stat-grid row row-cols-1 row-cols-sm-3 g-3">
       {stats.map((stat) => (
-        <li key={stat.label} className="stat" aria-busy={stat.source.status === 'loading'}>
-          <span className="stat__label">
-            <Icon name={stat.icon} size={16} />
-            {stat.label}
-          </span>
-          <span className="stat__value">{stat.value}</span>
-          <span className="stat__hint">{stat.hint}</span>
+        <li key={stat.label} className="col" aria-busy={stat.source.status === 'loading'}>
+          <div className="stat h-100">
+            <span className="stat__label">
+              <Icon name={stat.icon} size={16} />
+              {stat.label}
+            </span>
+            <span className="stat__value">{stat.value}</span>
+            <span className="stat__hint">{stat.hint}</span>
+          </div>
         </li>
       ))}
     </ul>

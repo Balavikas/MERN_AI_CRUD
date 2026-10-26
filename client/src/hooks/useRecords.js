@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchRecords } from '../api.js';
 
-function useRecords(endpoint, recordLabel) {
+function useRecords(endpoint, recordLabel, token) {
   const [records, setRecords] = useState([]);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
@@ -15,7 +15,7 @@ function useRecords(endpoint, recordLabel) {
       setError('');
 
       try {
-        setRecords(await fetchRecords(endpoint, recordLabel, controller.signal));
+        setRecords(await fetchRecords(endpoint, recordLabel, controller.signal, token));
         setStatus('success');
       } catch (loadError) {
         if (loadError.name === 'AbortError') {
@@ -28,7 +28,7 @@ function useRecords(endpoint, recordLabel) {
 
     loadRecords();
     return () => controller.abort();
-  }, [endpoint, recordLabel, version]);
+  }, [endpoint, recordLabel, token, version]);
 
   const reload = useCallback(() => setVersion((current) => current + 1), []);
 

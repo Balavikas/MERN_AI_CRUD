@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "migrate": "node migrate.js"
+    "migrate": "node migrate.js",
+    "create-director": "node create-director.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

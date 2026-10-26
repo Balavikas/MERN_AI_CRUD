@@ -3,6 +3,7 @@ import Icon from './Icon.jsx';
 import { categories, levels } from '../data.js';
 
 const searchPlaceholders = {
+  dashboard: 'Search courses, instructors, topics…',
   home: 'Search courses, instructors, topics…',
   crew: 'Search the crew by name, email, course…',
   toolkit: 'Search the toolkit…',
@@ -45,7 +46,7 @@ function SubNav({ pages, activePage, onNavigate, query, onQueryChange, filters, 
 
   function handleSearchSubmit(event) {
     event.preventDefault();
-    if (activePage === 'home') {
+    if (activePage === 'home' || activePage === 'dashboard') {
       onNavigate('home', 'courses');
     }
   }

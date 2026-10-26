@@ -1,5 +1,5 @@
 // Keep these rules in sync with server/validation.js.
-import { educationLevels } from './data.js';
+import { educationLevels, roles } from './data.js';
 
 export const passwordRules = [
   { id: 'length', label: 'More than 7 characters', test: (password) => password.length > 7 },
@@ -8,7 +8,8 @@ export const passwordRules = [
   { id: 'special', label: 'At least 1 special character', test: (password) => /[^A-Za-z0-9\s]/.test(password) },
 ];
 
-export function validateSignup(values) {
+// Name, email, phone and education: shared by sign-up and the faculty "Edit student" form.
+export function validateProfile(values) {
   const errors = {};
   const fullName = values.fullName.trim();
   const phoneDigits = values.phoneNumber.replace(/\D/g, '');
@@ -33,6 +34,16 @@ export function validateSignup(values) {
 
   if (!educationLevels.includes(values.education)) {
     errors.education = 'Pick an education level from the list.';
+  }
+
+  return errors;
+}
+
+export function validateSignup(values) {
+  const errors = validateProfile(values);
+
+  if (!roles.some((role) => role.id === values.role)) {
+    errors.role = 'Pick Student, Faculty or Director.';
   }
 
   if (!values.password) {

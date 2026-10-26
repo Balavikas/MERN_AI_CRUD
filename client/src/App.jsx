@@ -4,24 +4,61 @@ import Header from './components/Header.jsx';
 import SubNav from './components/SubNav.jsx';
 import useTheme from './hooks/useTheme.js';
 import CrewPage from './pages/CrewPage.jsx';
+import DirectorPage from './pages/DirectorPage.jsx';
+import FacultyPage from './pages/FacultyPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import AuthPage from './pages/AuthPage.jsx';
+import StudentPage from './pages/StudentPage.jsx';
 import ToolkitPage from './pages/ToolkitPage.jsx';
 import { continueLearning, learner } from './data.js';
 import { scrollBehavior, withViewTransition } from './utils/motion.js';
 
-const pages = [
+// Each role lands on its own dashboard (specs/AfterLogin.md), shown as the first tab.
+const dashboards = {
+  student: { label: 'My Learning', Page: StudentPage },
+  faculty: { label: 'Faculty Desk', Page: FacultyPage },
+  director: { label: "Director's Office", Page: DirectorPage },
+};
+
+const sharedPages = [
   { id: 'home', label: 'Home' },
   { id: 'crew', label: 'Manage Crew' },
   { id: 'toolkit', label: 'The Toolkit' },
 ];
 
 const noFilters = { category: '', level: '' };
+const sessionStorageKey = 'skillstack.session';
+
+function restoreSession() {
+  const savedSession = localStorage.getItem(sessionStorageKey) ?? sessionStorage.getItem(sessionStorageKey);
+  if (!savedSession) {
+    return null;
+  }
+
+  try {
+    const parsedSession = JSON.parse(savedSession);
+    if (
+      parsedSession
+      && parsedSession.id
+      && typeof parsedSession.firstName === 'string'
+      && dashboards[parsedSession.role]
+      && typeof parsedSession.token === 'string'
+    ) {
+      return parsedSession;
+    }
+  } catch {
+    // Discard malformed stored session data and show the login page.
+  }
+
+  localStorage.removeItem(sessionStorageKey);
+  sessionStorage.removeItem(sessionStorageKey);
+  return null;
+}
 
 function App() {
   const { theme, toggleTheme } = useTheme();
-  const [session, setSession] = useState(null);
-  const [activePage, setActivePage] = useState('home');
+  const [session, setSession] = useState(restoreSession);
+  const [activePage, setActivePage] = useState('dashboard');
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState(noFilters);
   const [startedCourseIds, setStartedCourseIds] = useState([]);
@@ -31,7 +68,10 @@ function App() {
     if (page !== activePage) {
       withViewTransition(() => {
         setActivePage(page);
-        setQuery('');
+        // A search typed on the dashboard carries over to the course list on Home.
+        if (!(activePage === 'dashboard' && page === 'home')) {
+          setQuery('');
+        }
       });
     }
     setScrollRequest({ page, targetId, focusId });
@@ -55,15 +95,31 @@ function App() {
     setScrollRequest(null);
   }, [scrollRequest, activePage]);
 
-  function logIn(details) {
-    withViewTransition(() => setSession({ firstName: details.name.split(' ')[0] || learner.firstName }));
+  function logIn(account) {
+    const nextSession = {
+      id: account.id,
+      firstName: account.full_name.split(' ')[0] || learner.firstName,
+      role: account.role,
+      token: account.token,
+    };
+    const storage = account.remember === false ? sessionStorage : localStorage;
+    const otherStorage = account.remember === false ? localStorage : sessionStorage;
+    otherStorage.removeItem(sessionStorageKey);
+    storage.setItem(sessionStorageKey, JSON.stringify(nextSession));
+
+    withViewTransition(() => {
+      setSession(nextSession);
+      setActivePage('dashboard');
+    });
     window.scrollTo({ top: 0 });
   }
 
   function logOut() {
+    localStorage.removeItem(sessionStorageKey);
+    sessionStorage.removeItem(sessionStorageKey);
     withViewTransition(() => {
       setSession(null);
-      setActivePage('home');
+      setActivePage('dashboard');
       setQuery('');
       setFilters(noFilters);
       setStartedCourseIds([]);
@@ -107,6 +163,9 @@ function App() {
     );
   }
 
+  const dashboard = dashboards[session.role];
+  const pages = [{ id: 'dashboard', label: dashboard.label }, ...sharedPages];
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">Skip to content</a>
@@ -131,6 +190,7 @@ function App() {
       />
 
       <main id="main" className="main" tabIndex={-1}>
+        {activePage === 'dashboard' && <dashboard.Page session={session} />}
         {activePage === 'home' && (
           <HomePage
             learnerName={session.firstName}

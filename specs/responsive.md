@@ -1,0 +1,1 @@
+-- Use bootstrap and make all the pages Responsive

@@ -1,0 +1,13 @@
+-- In the Login Tab, add a drop down with Student, Faculty, and Director Options
+-- In Case if the student is Logged in, The Page he has to Look's Something like this (Create the Page with the Following Details)
+    -- student page will have the List of courses he is currently doing (Displayed on right side)
+    -- student page will have the List of Assignments He has Completed (Displayed to the Left)
+    -- Student page will have the "Add the course" button to the middle of the page
+-- In case if the Faculity is Logged in, The Page he has to Look's Something like this (Create the Page with the Following Details)
+    -- Faculity page will have "Add Assignment" button (Displayed on right side)
+    -- Faculity page will have "Edit student" button (Displayed to the Left)
+    -- Faculity page will have the "Show all Registered students" button to the middle of the page
+-- In case if the Director is Logged in, The Page he has to Look's Something like this (Create the Page with the Following Details)
+    -- Director page will have "Add Faculity" & Delete Faculity button (Displayed on right side)
+    -- Director page will have "Show Registered Students" button (Displayed to the Left)
+    -- Director page will have the "Report" button to the middle of the page

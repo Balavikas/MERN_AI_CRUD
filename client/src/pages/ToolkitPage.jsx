@@ -25,26 +25,32 @@ function ToolkitPage({ query }) {
       </section>
 
       <section className="section section--tight">
-        <div className="container toolkit-grid">
-          <article className="bento-card" aria-labelledby="toolkit-resources-title">
-            <div className="bento-card__head">
-              <div>
-                <h2 id="toolkit-resources-title">E-Resources</h2>
-                <p>Rosters download fresh from the database every time.</p>
-              </div>
+        <div className="container">
+          <div className="row g-4 align-items-start">
+            <div className="col-12 col-lg-7">
+              <article className="bento-card" aria-labelledby="toolkit-resources-title">
+                <div className="bento-card__head">
+                  <div>
+                    <h2 id="toolkit-resources-title">E-Resources</h2>
+                    <p>Rosters download fresh from the database every time.</p>
+                  </div>
+                </div>
+                <ResourceList items={visibleResources} />
+              </article>
             </div>
-            <ResourceList items={visibleResources} />
-          </article>
 
-          <article className="bento-card" aria-labelledby="toolkit-gallery-title">
-            <div className="bento-card__head">
-              <div>
-                <h2 id="toolkit-gallery-title">Gallery</h2>
-                <p>Need a spark? Here's what the crew shipped.</p>
-              </div>
+            <div className="col-12 col-lg-5">
+              <article className="bento-card" aria-labelledby="toolkit-gallery-title">
+                <div className="bento-card__head">
+                  <div>
+                    <h2 id="toolkit-gallery-title">Gallery</h2>
+                    <p>Need a spark? Here's what the crew shipped.</p>
+                  </div>
+                </div>
+                <Gallery items={gallery} />
+              </article>
             </div>
-            <Gallery items={gallery} />
-          </article>
+          </div>
         </div>
       </section>
     </>

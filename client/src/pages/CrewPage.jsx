@@ -35,7 +35,7 @@ function CrewPage({ query, onNavigate }) {
   return (
     <>
       <section className="page-head" aria-labelledby="crew-title">
-        <div className="container page-head__inner">
+        <div className="container page-head__inner d-flex flex-column flex-md-row align-items-start align-items-md-end justify-content-between">
           <div>
             <span className="badge-pill">
               <Icon name="users" size={16} />

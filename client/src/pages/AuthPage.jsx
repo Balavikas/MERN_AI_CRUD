@@ -2,8 +2,8 @@ import { useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import Logo from '../components/Logo.jsx';
 import SignupForm from '../components/SignupForm.jsx';
-import { logIn } from '../api.js';
-import { trendingAiCourses } from '../data.js';
+import { createAccount, logIn } from '../api.js';
+import { roles, trendingAiCourses } from '../data.js';
 
 const modes = {
   login: {
@@ -18,10 +18,10 @@ const modes = {
   },
 };
 
-// Sign up creates an account in Postgres; log in checks the email and password against it.
+// Sign up creates an account with the chosen role in Postgres; log in checks the email, password and role against it.
 function AuthPage({ theme, onToggleTheme, onAuthenticated }) {
   const [mode, setMode] = useState('login');
-  const [form, setForm] = useState({ email: '', password: '', remember: true });
+  const [form, setForm] = useState({ role: roles[0].id, email: '', password: '', remember: true });
   const [showPassword, setShowPassword] = useState(false);
   const [note, setNote] = useState('');
   const [errors, setErrors] = useState({});
@@ -65,15 +65,16 @@ function AuthPage({ theme, onToggleTheme, onAuthenticated }) {
 
     setSubmitting(true);
     try {
-      const account = await logIn({ email: form.email, password: form.password });
-      onAuthenticated({ name: account.full_name });
+      const account = await logIn({ email: form.email, password: form.password, role: form.role });
+      onAuthenticated({ ...account, remember: form.remember });
     } catch (error) {
       const serverErrors = error.fieldErrors || {};
       // The server only flags the email field when no account uses it.
       setErrors(Object.keys(serverErrors).length > 0
         ? { ...serverErrors, noAccount: Boolean(serverErrors.email) }
         : { form: error.message });
-      document.getElementById(serverErrors.email ? 'login-email' : 'login-password')?.focus();
+      const fieldToFocus = ['email', 'role'].find((name) => serverErrors[name]) || 'password';
+      document.getElementById(`login-${fieldToFocus}`)?.focus();
       setSubmitting(false);
     }
   }
@@ -82,6 +83,12 @@ function AuthPage({ theme, onToggleTheme, onAuthenticated }) {
     return errors[name]
       ? { 'aria-invalid': true, 'aria-describedby': `login-${name}-error` }
       : {};
+  }
+
+  // Log the new account straight in with the role it signed up as.
+  async function signUpAndLogIn(account) {
+    await createAccount(account);
+    return logIn({ email: account.email, password: account.password, role: account.role });
   }
 
   function comingSoon(provider) {
@@ -99,188 +106,218 @@ function AuthPage({ theme, onToggleTheme, onAuthenticated }) {
         </div>
       </header>
 
-      <main id="main" className="container auth__grid">
-        <section className="auth-card" aria-labelledby="auth-title">
-          <div className="segmented segmented--full" role="group" aria-label="Choose how to continue">
-            <button type="button" aria-pressed={mode === 'login'} onClick={() => switchMode('login')}>
-              Log in
-            </button>
-            <button type="button" aria-pressed={isSignup} onClick={() => switchMode('signup')}>
-              Sign up
-            </button>
-          </div>
-
-          <div>
-            <h2 className="auth-card__title" id="auth-title">{copy.title}</h2>
-            <p className="auth-card__subtitle">{copy.subtitle}</p>
-          </div>
-
-          {isSignup ? (
-            <SignupForm
-              idPrefix="signup"
-              submitLabel={copy.submit}
-              onCreated={(account) => onAuthenticated({ name: account.full_name })}
-            />
-          ) : (
-            <form className="form" onSubmit={handleSubmit} noValidate>
-              <div className="field">
-                <label htmlFor="login-email">Email</label>
-                <div className="input-icon">
-                  <Icon name="mail" size={18} className="input-icon__lead" />
-                  <input
-                    id="login-email"
-                    name="email"
-                    type="email"
-                    className="input"
-                    value={form.email}
-                    onChange={updateField}
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                    required
-                    {...errorProps('email')}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="field__error" id="login-email-error">
-                    {errors.email}{' '}
-                    {errors.noAccount && (
-                      <button type="button" className="text-link text-link--sm text-link--inline" onClick={() => switchMode('signup')}>
-                        Sign up instead
-                      </button>
-                    )}
-                  </p>
-                )}
+      <main id="main" className="container auth__main">
+        <div className="row g-4 align-items-center">
+          <div className="col-12 col-lg-5">
+            <section className="auth-card" aria-labelledby="auth-title">
+              <div className="segmented segmented--full" role="group" aria-label="Choose how to continue">
+                <button type="button" aria-pressed={mode === 'login'} onClick={() => switchMode('login')}>
+                  Log in
+                </button>
+                <button type="button" aria-pressed={isSignup} onClick={() => switchMode('signup')}>
+                  Sign up
+                </button>
               </div>
 
-              <div className="field">
-                <div className="field__label-row">
-                  <label htmlFor="login-password">Password</label>
-                  <button
-                    type="button"
-                    className="text-link text-link--sm"
-                    onClick={() => setNote('Password resets are coming soon. Hang tight.')}
-                  >
-                    Forgot it?
-                  </button>
-                </div>
-                <div className="input-icon">
-                  <Icon name="lock" size={18} className="input-icon__lead" />
-                  <input
-                    id="login-password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    className="input input--trail"
-                    value={form.password}
-                    onChange={updateField}
-                    autoComplete="current-password"
-                    placeholder="Your password"
-                    required
-                    {...errorProps('password')}
-                  />
-                  <button
-                    type="button"
-                    className="input-icon__trail"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    aria-pressed={showPassword}
-                    onClick={() => setShowPassword((shown) => !shown)}
-                  >
-                    <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} />
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="field__error" id="login-password-error">{errors.password}</p>
-                )}
+              <div>
+                <h2 className="auth-card__title" id="auth-title">{copy.title}</h2>
+                <p className="auth-card__subtitle">{copy.subtitle}</p>
               </div>
 
-              <label className="checkbox">
-                <input type="checkbox" name="remember" checked={form.remember} onChange={updateField} />
-                Keep me logged in
-              </label>
-
-              <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={submitting}>
-                {submitting ? 'Checking…' : copy.submit}
-                {!submitting && <Icon name="arrowRight" size={18} />}
-              </button>
-
-              <p className="sr-only" role="alert">
-                {[errors.email, errors.password, errors.form].filter(Boolean).join(' ')}
-              </p>
-              {errors.form && <p className="form-status form-status--error">{errors.form}</p>}
-            </form>
-          )}
-
-          <p className="sr-only" role="status">{note}</p>
-          {note && <p className="auth-card__note" aria-hidden="true">{note}</p>}
-
-          <div className="divider"><span>or keep it quick</span></div>
-
-          <div className="social-auth">
-            <button type="button" className="btn btn--outline btn--lg" onClick={() => comingSoon('Google')}>
-              <span className="google-mark" aria-hidden="true">G</span>
-              Google
-            </button>
-            <button type="button" className="btn btn--outline btn--lg" onClick={() => comingSoon('GitHub')}>
-              <Icon name="github" size={18} />
-              GitHub
-            </button>
-          </div>
-
-          <p className="auth-card__switch">
-            {isSignup ? 'Already have an account? ' : 'New to SkillStack? '}
-            <button type="button" className="text-link" onClick={() => switchMode(isSignup ? 'login' : 'signup')}>
-              {isSignup ? 'Log in instead' : 'Create an account'}
-            </button>
-          </p>
-        </section>
-
-        <section className="auth__showcase" aria-labelledby="auth-pitch">
-          <span className="badge-pill">
-            <Icon name="sparkles" size={16} />
-            Skills that pay off
-          </span>
-          <h1 className="auth__pitch" id="auth-pitch">
-            Learn essential <span className="accent">career and life skills</span>
-          </h1>
-          <p className="hero__lead">
-            SkillStack helps you build in-demand skills fast and advance your career in a changing job market.
-          </p>
-
-          <div className="trending">
-            <div className="trending__head">
-              <h2 className="trending__title">
-                <Icon name="zap" size={18} />
-                Trending AI courses
-              </h2>
-              <p className="trending__sub">What everyone's stacking this week</p>
-            </div>
-            <ul className="trending__list">
-              {trendingAiCourses.map((course) => (
-                <li key={course.id} className="trend-card">
-                  <span className="icon-tile icon-tile--sm">
-                    <Icon name={course.icon} size={18} />
-                  </span>
-                  <div className="trend-card__body">
-                    <div className="trend-card__top">
-                      <p className="trend-card__title">{course.title}</p>
-                      <span className={`tag tag--${course.badge.toLowerCase()}`}>{course.badge}</span>
+              {isSignup ? (
+                <SignupForm
+                  idPrefix="signup"
+                  showRole
+                  submitLabel={copy.submit}
+                  submit={signUpAndLogIn}
+                  onCreated={onAuthenticated}
+                />
+              ) : (
+                <form className="form" onSubmit={handleSubmit} noValidate>
+                  <div className="field">
+                    <label htmlFor="login-role">Log in as</label>
+                    <div className="select">
+                      <select
+                        id="login-role"
+                        name="role"
+                        className="input"
+                        value={form.role}
+                        onChange={updateField}
+                        {...errorProps('role')}
+                      >
+                        {roles.map((role) => (
+                          <option key={role.id} value={role.id}>{role.label}</option>
+                        ))}
+                      </select>
+                      <Icon name="chevronDown" size={18} className="select__icon" />
                     </div>
-                    <p className="trend-card__instructor">with {course.instructor}</p>
-                    <ul className="course-meta" aria-label="Course details">
-                      <li>
-                        <Icon name="clock" size={14} />
-                        {course.duration}
-                      </li>
-                      <li>
-                        <Icon name="chart" size={14} />
-                        {course.level}
-                      </li>
-                    </ul>
+                    {errors.role && <p className="field__error" id="login-role-error">{errors.role}</p>}
                   </div>
-                </li>
-              ))}
-            </ul>
+
+                  <div className="field">
+                    <label htmlFor="login-email">Email</label>
+                    <div className="input-icon">
+                      <Icon name="mail" size={18} className="input-icon__lead" />
+                      <input
+                        id="login-email"
+                        name="email"
+                        type="email"
+                        className="input"
+                        value={form.email}
+                        onChange={updateField}
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        required
+                        {...errorProps('email')}
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="field__error" id="login-email-error">
+                        {errors.email}{' '}
+                        {errors.noAccount && (
+                          <button type="button" className="text-link text-link--sm text-link--inline" onClick={() => switchMode('signup')}>
+                            Sign up instead
+                          </button>
+                        )}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="field">
+                    <div className="field__label-row">
+                      <label htmlFor="login-password">Password</label>
+                      <button
+                        type="button"
+                        className="text-link text-link--sm"
+                        onClick={() => setNote('Password resets are coming soon. Hang tight.')}
+                      >
+                        Forgot it?
+                      </button>
+                    </div>
+                    <div className="input-icon">
+                      <Icon name="lock" size={18} className="input-icon__lead" />
+                      <input
+                        id="login-password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        className="input input--trail"
+                        value={form.password}
+                        onChange={updateField}
+                        autoComplete="current-password"
+                        placeholder="Your password"
+                        required
+                        {...errorProps('password')}
+                      />
+                      <button
+                        type="button"
+                        className="input-icon__trail"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        aria-pressed={showPassword}
+                        onClick={() => setShowPassword((shown) => !shown)}
+                      >
+                        <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} />
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="field__error" id="login-password-error">{errors.password}</p>
+                    )}
+                  </div>
+
+                  <label className="checkbox">
+                    <input type="checkbox" name="remember" checked={form.remember} onChange={updateField} />
+                    Keep me logged in
+                  </label>
+
+                  <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={submitting}>
+                    {submitting ? 'Checking…' : copy.submit}
+                    {!submitting && <Icon name="arrowRight" size={18} />}
+                  </button>
+
+                  <p className="sr-only" role="alert">
+                    {[errors.role, errors.email, errors.password, errors.form].filter(Boolean).join(' ')}
+                  </p>
+                  {errors.form && <p className="form-status form-status--error">{errors.form}</p>}
+                </form>
+              )}
+
+              <p className="sr-only" role="status">{note}</p>
+              {note && <p className="auth-card__note" aria-hidden="true">{note}</p>}
+
+              <div className="divider"><span>or keep it quick</span></div>
+
+              <div className="social-auth">
+                <button type="button" className="btn btn--outline btn--lg" onClick={() => comingSoon('Google')}>
+                  <span className="google-mark" aria-hidden="true">G</span>
+                  Google
+                </button>
+                <button type="button" className="btn btn--outline btn--lg" onClick={() => comingSoon('GitHub')}>
+                  <Icon name="github" size={18} />
+                  GitHub
+                </button>
+              </div>
+
+              <p className="auth-card__switch">
+                {isSignup ? 'Already have an account? ' : 'New to SkillStack? '}
+                <button type="button" className="text-link" onClick={() => switchMode(isSignup ? 'login' : 'signup')}>
+                  {isSignup ? 'Log in instead' : 'Create an account'}
+                </button>
+              </p>
+            </section>
           </div>
-        </section>
+
+          <div className="col-12 col-lg-7">
+            <section className="auth__showcase" aria-labelledby="auth-pitch">
+              <span className="badge-pill">
+                <Icon name="sparkles" size={16} />
+                Skills that pay off
+              </span>
+              <h1 className="auth__pitch" id="auth-pitch">
+                Learn essential <span className="accent">career and life skills</span>
+              </h1>
+              <p className="hero__lead">
+                SkillStack helps you build in-demand skills fast and advance your career in a changing job market.
+              </p>
+
+              <div className="trending">
+                <div className="trending__head">
+                  <h2 className="trending__title">
+                    <Icon name="zap" size={18} />
+                    Trending AI courses
+                  </h2>
+                  <p className="trending__sub">What everyone's stacking this week</p>
+                </div>
+                <ul className="trending__list row row-cols-1 row-cols-sm-2 g-3">
+                  {trendingAiCourses.map((course) => (
+                    <li key={course.id} className="col">
+                      <div className="trend-card h-100">
+                        <span className="icon-tile icon-tile--sm">
+                          <Icon name={course.icon} size={18} />
+                        </span>
+                        <div className="trend-card__body">
+                          <div className="trend-card__top">
+                            <p className="trend-card__title">{course.title}</p>
+                            <span className={`tag tag--${course.badge.toLowerCase()}`}>{course.badge}</span>
+                          </div>
+                          <p className="trend-card__instructor">with {course.instructor}</p>
+                          <ul className="course-meta" aria-label="Course details">
+                            <li>
+                              <Icon name="clock" size={14} />
+                              {course.duration}
+                            </li>
+                            <li>
+                              <Icon name="chart" size={14} />
+                              {course.level}
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          </div>
+        </div>
       </main>
 
       <footer className="container auth__footer">

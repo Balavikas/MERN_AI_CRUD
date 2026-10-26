@@ -29,31 +29,33 @@ function Footer({ onNavigate, onCategoryPick }) {
 
   return (
     <footer className="site-footer">
-      <div className="container footer-grid">
-        <div className="footer-brand">
-          <Logo />
-          <p className="footer-brand__tagline">
-            Learn by building. Ship projects, find your crew, and skip the boring parts.
-          </p>
-          <div className="social-row">
-            {socials.map((social) => (
-              <a key={social.name} className="icon-btn" href="#" aria-label={`SkillStack on ${social.name}`}>
-                <Icon name={social.icon} size={18} />
-              </a>
-            ))}
-          </div>
-        </div>
-
-        {footerColumns.map((column) => (
-          <nav key={column.title} className="footer-col" aria-label={column.title}>
-            <h2 className="footer-col__title">{column.title}</h2>
-            <ul>
-              {column.links.map((link) => (
-                <li key={link.label}>{renderLink(link)}</li>
+      <div className="container">
+        <div className="row g-4">
+          <div className="footer-brand col-12 col-lg-4">
+            <Logo />
+            <p className="footer-brand__tagline">
+              Learn by building. Ship projects, find your crew, and skip the boring parts.
+            </p>
+            <div className="social-row">
+              {socials.map((social) => (
+                <a key={social.name} className="icon-btn" href="#" aria-label={`SkillStack on ${social.name}`}>
+                  <Icon name={social.icon} size={18} />
+                </a>
               ))}
-            </ul>
-          </nav>
-        ))}
+            </div>
+          </div>
+
+          {footerColumns.map((column) => (
+            <nav key={column.title} className="footer-col col-6 col-md-3 col-lg-2" aria-label={column.title}>
+              <h2 className="footer-col__title">{column.title}</h2>
+              <ul>
+                {column.links.map((link) => (
+                  <li key={link.label}>{renderLink(link)}</li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+        </div>
       </div>
 
       <div className="container footer-bottom">
