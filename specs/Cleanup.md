@@ -1,0 +1,3 @@
+-- Hide the toolkit tab, manage crew, home tab (Do not remove the Logic)
+-- remove join now button
+-- Instead of Exit session symbol, show Logout button

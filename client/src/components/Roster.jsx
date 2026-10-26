@@ -1,16 +1,15 @@
 import { useState } from 'react';
 import Icon from './Icon.jsx';
 import RecordsView from '../RecordsView.jsx';
-import { studentColumns } from '../data.js';
 
-// Every registered student with how many courses they're taking. Faculty and directors only.
-function StudentRoster({ id, token }) {
+// A searchable table of accounts: `roster` is one of `rosters` in data.js (students or faculty).
+function Roster({ id, token, roster }) {
   const [query, setQuery] = useState('');
 
   return (
     <>
       <div className="search search--block" role="search">
-        <label className="sr-only" htmlFor={`${id}-search`}>Search students</label>
+        <label className="sr-only" htmlFor={`${id}-search`}>Search {roster.recordLabel}</label>
         <Icon name="search" size={18} className="search__icon" />
         <input
           id={`${id}-search`}
@@ -21,12 +20,12 @@ function StudentRoster({ id, token }) {
         />
       </div>
       <RecordsView
-        endpoint="/api/students"
+        endpoint={roster.endpoint}
         source="Postgres · registrations"
-        title="Registered students"
-        description="Everyone with a student account, newest first."
-        recordLabel="students"
-        columns={studentColumns}
+        title={roster.title}
+        description={roster.description}
+        recordLabel={roster.recordLabel}
+        columns={roster.columns}
         getRowKey={(record) => record.id}
         query={query}
         token={token}
@@ -35,4 +34,4 @@ function StudentRoster({ id, token }) {
   );
 }
 
-export default StudentRoster;
+export default Roster;

@@ -74,6 +74,20 @@ export function deleteFaculty(token, facultyId) {
   return sendJson('DELETE', `/api/faculty/${facultyId}`, undefined, 'Could not remove that faculty member.', token);
 }
 
+export function assignFaculty(token, assignment) {
+  return sendJson('POST', '/api/faculty-assignments', assignment, 'Could not assign that faculty member.', token);
+}
+
+export function unassignFaculty(token, facultyId, courseId) {
+  return sendJson(
+    'DELETE',
+    `/api/faculty-assignments/${facultyId}/${encodeURIComponent(courseId)}`,
+    undefined,
+    'Could not remove that assignment.',
+    token,
+  );
+}
+
 export function fetchReport(token) {
   return sendJson('GET', '/api/report', undefined, 'Could not build the report.', token);
 }

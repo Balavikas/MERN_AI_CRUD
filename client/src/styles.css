@@ -20,6 +20,10 @@
   --danger: #b42318;
   --success: #047857;
 
+  /* Chart series (EducationChart). Blue/purple pair validated for color-blind separation per theme. */
+  --series-students: #2563eb;
+  --series-faculty: #6b21a8;
+
   --radius-xl: 12px;
   --radius-2xl: 16px;
   --radius-3xl: 24px;
@@ -56,6 +60,9 @@
   --accent-secondary-text: #38bdf8;
   --danger: #fca5a5;
   --success: #6ee7b7;
+
+  --series-students: #0369a1;
+  --series-faculty: #a855f7;
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 16px rgb(0 0 0 / 20%);
   --shadow-md: 0 6px 12px -2px rgb(0 0 0 / 45%), 0 2px 4px -2px rgb(0 0 0 / 30%);
@@ -1087,6 +1094,11 @@ a {
   font-weight: 500;
 }
 
+.field__hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .password-rules {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1325,6 +1337,9 @@ a {
 }
 
 .table-scroll {
+  /* Positioned so absolutely positioned children (e.g. .sr-only header labels) are clipped by the scroll box
+     instead of widening the page on phones. */
+  position: relative;
   overflow-x: auto;
 }
 
@@ -1426,6 +1441,277 @@ tbody tr:last-child td {
 .search--block {
   width: 100%;
   margin-bottom: 16px;
+}
+
+/* ---------- Enrollment bar chart (faculty dashboard) ---------- */
+
+/* One series in the accent blue (validated >= 3:1 on both surfaces); text stays in text tokens. */
+.segmented--compact {
+  flex: none;
+  margin-bottom: 0;
+}
+
+.segmented--compact button {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.bar-chart {
+  position: relative;
+  transition: opacity var(--ease);
+}
+
+/* Refetch keeps the frame: the previous render stays, dimmed, until new numbers arrive. */
+.bar-chart.is-refreshing {
+  opacity: 0.55;
+}
+
+.bar-chart__rows {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bar-chart__row {
+  display: grid;
+  grid-template-columns: minmax(140px, 32%) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-height: 32px;
+  padding: 3px 8px;
+  border-radius: var(--radius-xl);
+  cursor: default;
+}
+
+.bar-chart__row:focus-visible {
+  outline-offset: 0;
+}
+
+.bar-chart__row.is-active {
+  background: var(--surface);
+}
+
+.bar-chart__label {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.bar-chart__row.is-active .bar-chart__label {
+  color: var(--text);
+}
+
+/* The track's left edge is the shared zero baseline. 40px is held back so the value label always fits. */
+.bar-chart__track {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  border-left: 1px solid var(--border);
+}
+
+.bar-chart__bar {
+  flex: none;
+  width: calc((100% - 40px) * var(--ratio));
+  height: 20px;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+  transition: filter var(--ease);
+}
+
+.bar-chart__row.is-active .bar-chart__bar {
+  filter: brightness(1.15);
+}
+
+.bar-chart__value {
+  color: var(--text);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.bar-chart__value.is-zero {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.bar-chart__tooltip {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  width: 208px;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--bg);
+  box-shadow: var(--shadow-md);
+  font-size: 13px;
+  line-height: 1.35;
+  pointer-events: none;
+  transform: translateY(-25%);
+}
+
+.bar-chart__tooltip strong {
+  font-size: 15px;
+}
+
+.bar-chart__tooltip-meta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+th.numeric,
+td.numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ---------- Education grouped bar chart (director dashboard, Recharts) ---------- */
+
+.education-chart__filters {
+  align-self: flex-start;
+  flex-wrap: wrap;
+}
+
+.education-chart__figure {
+  margin: 0;
+  transition: opacity var(--ease);
+}
+
+.education-chart__figure.is-refreshing {
+  opacity: 0.55;
+}
+
+.education-chart__plot {
+  height: 320px;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0 0 12px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 13px;
+  list-style: none;
+}
+
+.chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.chart-swatch--students,
+.chart-bar--students .recharts-rectangle {
+  background: var(--series-students);
+  fill: var(--series-students);
+}
+
+.chart-swatch--faculty,
+.chart-bar--faculty .recharts-rectangle {
+  background: var(--series-faculty);
+  fill: var(--series-faculty);
+}
+
+.chart-bar .recharts-rectangle {
+  transition: filter var(--ease);
+}
+
+.chart-bar .recharts-active-bar,
+.chart-bar .recharts-rectangle:hover {
+  filter: brightness(1.15);
+}
+
+/* Axes and grid stay recessive; text uses text tokens, never the series colors. */
+.education-chart .recharts-cartesian-grid line {
+  stroke: var(--border);
+}
+
+.education-chart .recharts-cartesian-axis-line {
+  stroke: var(--border);
+}
+
+.education-chart .recharts-cartesian-axis-tick-value {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.education-chart .recharts-label {
+  fill: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.education-chart .chart-cursor {
+  fill: var(--surface);
+}
+
+.chart-tooltip {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--bg);
+  box-shadow: var(--shadow-md);
+  font-size: 13px;
+}
+
+.chart-tooltip strong {
+  font-size: 15px;
+}
+
+.chart-tooltip__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Tooltip rows key their series with a short line, not a filled box. */
+.chart-key {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.chart-key--students {
+  background: var(--series-students);
+}
+
+.chart-key--faculty {
+  background: var(--series-faculty);
+}
+
+/* ---------- Faculty course assignments (director dashboard) ---------- */
+
+/* Line the Assign button up with the inputs, under their labels (label line height + gap). */
+@media (min-width: 768px) {
+  .assign-form__submit {
+    padding-top: 27px;
+  }
+}
+
+.my-courses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 /* ---------- Modal ---------- */
@@ -1949,6 +2235,30 @@ tbody tr:last-child td {
   }
 
   /* Row actions drop under the text, lined up with it (40px icon + 12px gap). */
+  .education-chart__plot {
+    height: 300px;
+  }
+
+  /* Three equal filter buttons across the card instead of a pill that wraps mid-control. */
+  .education-chart__filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-self: stretch;
+  }
+
+  .education-chart__filters button {
+    justify-content: center;
+    padding: 0 4px;
+    font-size: 12px;
+  }
+
+  /* Phones: each course name sits above its bar so both get the full width. */
+  .bar-chart__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
   .resource {
     flex-wrap: wrap;
   }

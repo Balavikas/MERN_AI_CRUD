@@ -26,6 +26,10 @@ const sharedPages = [
   { id: 'toolkit', label: 'The Toolkit' },
 ];
 
+// Pages kept in the code but hidden from users for now (specs/Cleanup.md): no nav tab, no footer links into them,
+// and the course search/filters (which only serve Home) are hidden too. Remove an id to bring that page back.
+const hiddenPages = new Set(['home', 'crew', 'toolkit']);
+
 const noFilters = { category: '', level: '' };
 const sessionStorageKey = 'skillstack.session';
 
@@ -164,7 +168,7 @@ function App() {
   }
 
   const dashboard = dashboards[session.role];
-  const pages = [{ id: 'dashboard', label: dashboard.label }, ...sharedPages];
+  const pages = [{ id: 'dashboard', label: dashboard.label }, ...sharedPages.filter((page) => !hiddenPages.has(page.id))];
 
   return (
     <div className="app-shell">
@@ -175,8 +179,7 @@ function App() {
       <Header
         theme={theme}
         onToggleTheme={toggleTheme}
-        onHome={() => navigate('home')}
-        onJoin={() => navigate('home', 'join', 'join-fullName')}
+        onHome={() => navigate(hiddenPages.has('home') ? 'dashboard' : 'home')}
         onLogOut={logOut}
       />
       <SubNav
@@ -187,6 +190,7 @@ function App() {
         onQueryChange={setQuery}
         filters={filters}
         onFiltersChange={setFilters}
+        showTools={!hiddenPages.has('home')}
       />
 
       <main id="main" className="main" tabIndex={-1}>
@@ -208,7 +212,7 @@ function App() {
         {activePage === 'toolkit' && <ToolkitPage query={query} />}
       </main>
 
-      <Footer onNavigate={navigate} onCategoryPick={pickCategory} />
+      <Footer onNavigate={navigate} onCategoryPick={pickCategory} hiddenPages={hiddenPages} />
     </div>
   );
 }

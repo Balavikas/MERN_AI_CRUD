@@ -7,8 +7,11 @@ const emptyForm = { courseId: '', title: '', description: '', dueDate: '' };
 const fieldOrder = Object.keys(emptyForm);
 
 // Posts an assignment to one course; every student enrolled in it sees it on their dashboard.
+// Only the courses a director has assigned to this faculty member are offered (specs/AssignFaculty.md); the API
+// enforces the same rule.
 function AssignmentForm({ token, onCreated }) {
-  const courses = useRecords('/api/courses', 'courses');
+  const courses = useRecords('/api/faculty-assignments/mine', 'courses', token);
+  const noCourses = courses.status === 'success' && courses.records.length === 0;
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle');
@@ -81,8 +84,8 @@ function AssignmentForm({ token, onCreated }) {
       <div className="field">
         <label htmlFor="assignment-courseId">Course</label>
         <div className="select">
-          <select {...fieldProps('courseId')} className="input" disabled={courses.status !== 'success'}>
-            <option value="">{courses.status === 'loading' ? 'Loading courses…' : 'Choose a course…'}</option>
+          <select {...fieldProps('courseId')} className="input" disabled={courses.status !== 'success' || noCourses}>
+            <option value="">{courses.status === 'loading' ? 'Loading your courses…' : 'Choose a course…'}</option>
             {courses.records.map((course) => (
               <option key={course.id} value={course.id}>{course.title} · {course.category}</option>
             ))}
@@ -90,7 +93,10 @@ function AssignmentForm({ token, onCreated }) {
           <Icon name="chevronDown" size={18} className="select__icon" />
         </div>
         {renderError('courseId')}
-        {courses.status === 'error' && <p className="field__error">Couldn't load courses: {courses.error}</p>}
+        {courses.status === 'error' && <p className="field__error">Couldn't load your courses: {courses.error}</p>}
+        {noCourses && (
+          <p className="field__hint">You aren't assigned to any courses yet. Ask a director to assign you to one.</p>
+        )}
       </div>
 
       <div className="field">
@@ -116,7 +122,7 @@ function AssignmentForm({ token, onCreated }) {
         {renderError('dueDate')}
       </div>
 
-      <button type="submit" className="btn btn--primary btn--block" disabled={status === 'submitting'}>
+      <button type="submit" className="btn btn--primary btn--block" disabled={status === 'submitting' || noCourses}>
         {status === 'submitting' ? 'Posting…' : 'Post assignment'}
       </button>
 

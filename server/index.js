@@ -263,6 +263,23 @@ app.post('/api/student/assignments/:id/complete', requireRole('student'), async 
 
 // Faculty and director dashboards
 
+// Enrollments per course for the faculty bar chart, highest first. Courses nobody has joined are included with 0.
+app.get('/api/course-enrollments', requireRole('faculty', 'director'), async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT c.id AS course_id, c.title, c.category, COUNT(e.student_id)::int AS enrollments
+       FROM courses c
+       LEFT JOIN enrollments e ON e.course_id = c.id
+       GROUP BY c.id
+       ORDER BY enrollments DESC, c.title;`,
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Failed to fetch course enrollments:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/students', requireRole('faculty', 'director'), async (_req, res) => {
   try {
     const result = await pool.query(
@@ -341,12 +358,23 @@ app.post('/api/assignments', requireRole('faculty'), async (req, res) => {
   }
 
   try {
+    // Only faculty assigned to the course by a director may post to it (specs/AssignFaculty.md). The check and the
+    // insert are one statement, so an assignment removed mid-request can't slip through.
     const result = await pool.query(
       `INSERT INTO assignments (course_id, title, description, due_date, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+       SELECT $1, $2, $3, $4, $5
+       WHERE EXISTS (SELECT 1 FROM faculty_assignments WHERE faculty_id = $5 AND course_id = $1)
        RETURNING id, course_id, title, description, due_date::text AS due_date, created_at;`,
       [values.courseId, values.title.trim(), values.description.trim(), values.dueDate || null, req.user.id],
     );
+    if (result.rows.length === 0) {
+      const course = await pool.query('SELECT 1 FROM courses WHERE id = $1;', [values.courseId]);
+      if (course.rows.length === 0) {
+        return res.status(400).json({ error: 'Some details need fixing.', fieldErrors: { courseId: 'Pick a course from the list.' } });
+      }
+      const message = "You aren't assigned to this course. Ask a director to assign you first.";
+      return res.status(403).json({ error: message, fieldErrors: { courseId: message } });
+    }
     res.status(201).json(result.rows[0]);
   } catch (error) {
     if (error.code === '23503') {
@@ -357,12 +385,117 @@ app.post('/api/assignments', requireRole('faculty'), async (req, res) => {
   }
 });
 
+// The courses a director has assigned to the logged-in faculty member: the only ones they can post assignments to.
+app.get('/api/faculty-assignments/mine', requireRole('faculty'), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT ${courseColumns}, fa.assigned_at
+       FROM faculty_assignments fa
+       JOIN courses c ON c.id = fa.course_id
+       WHERE fa.faculty_id = $1
+       ORDER BY c.title;`,
+      [req.user.id],
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Failed to fetch faculty courses:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Director dashboard
 
+// Every faculty-to-course assignment, grouped by course.
+app.get('/api/faculty-assignments', requireRole('director'), async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT fa.faculty_id, r.full_name AS faculty_name, r.email AS faculty_email,
+              fa.course_id, c.title AS course_title, c.category AS course_category, c.icon AS course_icon,
+              fa.assigned_at
+       FROM faculty_assignments fa
+       JOIN registrations r ON r.id = fa.faculty_id
+       JOIN courses c ON c.id = fa.course_id
+       ORDER BY c.title, r.full_name;`,
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Failed to fetch faculty assignments:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/faculty-assignments', requireRole('director'), async (req, res) => {
+  const facultyId = readId(req.body?.facultyId ?? '');
+  const courseId = String(req.body?.courseId ?? '');
+  const fieldErrors = {};
+  if (!facultyId) {
+    fieldErrors.facultyId = 'Pick a faculty member.';
+  }
+  if (!courseId) {
+    fieldErrors.courseId = 'Pick a course.';
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    return res.status(400).json({ error: 'Some details need fixing.', fieldErrors });
+  }
+
+  try {
+    // Only faculty accounts can be assigned; the SELECT returns no row for a student, a director or an unknown id.
+    const result = await pool.query(
+      `INSERT INTO faculty_assignments (faculty_id, course_id, assigned_by)
+       SELECT r.id, $2, $3 FROM registrations r WHERE r.id = $1 AND r.role = 'faculty'
+       ON CONFLICT (faculty_id, course_id) DO NOTHING
+       RETURNING faculty_id, course_id, assigned_at;`,
+      [facultyId, courseId, req.user.id],
+    );
+    if (result.rows.length === 0) {
+      const faculty = await pool.query("SELECT 1 FROM registrations WHERE id = $1 AND role = 'faculty';", [facultyId]);
+      if (faculty.rows.length === 0) {
+        return res.status(400).json({ error: 'Some details need fixing.', fieldErrors: { facultyId: 'Pick a faculty member from the list.' } });
+      }
+      return res.status(409).json({ error: 'That faculty member is already assigned to this course.' });
+    }
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    if (error.code === '23503') {
+      return res.status(400).json({ error: 'Some details need fixing.', fieldErrors: { courseId: 'Pick a course from the list.' } });
+    }
+    console.error('Failed to assign faculty:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/faculty-assignments/:facultyId/:courseId', requireRole('director'), async (req, res) => {
+  const facultyId = readId(req.params.facultyId);
+  if (!facultyId) {
+    return res.status(404).json({ error: 'That assignment does not exist.' });
+  }
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM faculty_assignments WHERE faculty_id = $1 AND course_id = $2 RETURNING faculty_id;',
+      [facultyId, req.params.courseId],
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'That assignment does not exist.' });
+    }
+    res.status(204).end();
+  } catch (error) {
+    console.error('Failed to unassign faculty:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Every faculty member with how many courses they're assigned to teach.
 app.get('/api/faculty', requireRole('director'), async (_req, res) => {
   try {
     const result = await pool.query(
-      `SELECT ${publicColumns} FROM registrations WHERE role = 'faculty' ORDER BY created_at DESC;`,
+      `SELECT r.id, r.full_name, r.email, r.phone_number, r.education, r.role, r.created_at,
+              COUNT(fa.course_id)::int AS course_count
+       FROM registrations r
+       LEFT JOIN faculty_assignments fa ON fa.faculty_id = r.id
+       WHERE r.role = 'faculty'
+       GROUP BY r.id
+       ORDER BY r.created_at DESC;`,
     );
     res.json(result.rows);
   } catch (error) {
@@ -407,6 +540,30 @@ app.delete('/api/faculty/:id', requireRole('director'), async (req, res) => {
     res.status(204).end();
   } catch (error) {
     console.error('Failed to delete faculty:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Students and faculty per education level for the director's grouped bar chart. Every level is returned, with 0
+// where nobody matches, in the order the chart shows them. Same five values as educationLevels in validation.js.
+const chartEducationOrder = ['Bootcamp', 'High school', 'Self-taught', 'Undergraduate', 'Postgraduate'];
+
+app.get('/api/education-breakdown', requireRole('director'), async (_req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT education, role, COUNT(*)::int AS count
+       FROM registrations
+       WHERE role IN ('student', 'faculty')
+       GROUP BY education, role;`,
+    );
+    const counts = new Map(result.rows.map((row) => [`${row.education}:${row.role}`, row.count]));
+    res.json(chartEducationOrder.map((education) => ({
+      education,
+      students: counts.get(`${education}:student`) || 0,
+      faculty: counts.get(`${education}:faculty`) || 0,
+    })));
+  } catch (error) {
+    console.error('Failed to fetch education breakdown:', error);
     res.status(500).json({ error: error.message });
   }
 });

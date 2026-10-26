@@ -1,0 +1,4 @@
+-- In the director tab we are going to Implement a new feature
+-- Director will also have a feature to Assign a Faculty to a particular course (Create Faculty_Assignment table to handle this)
+-- Only that faculty who were assigned to that particular course should be able to add asignments to that particular course, other Faculty who were not assigned will not have a priviledge to add any assignments to that course
+-- In Directors Dashboard,there is a faculty tab with add and delete option, under that it is displaying all the faculty, Instead of that could you add something similar to "show registered students" behavior

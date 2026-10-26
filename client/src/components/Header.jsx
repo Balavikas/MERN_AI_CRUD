@@ -1,7 +1,7 @@
 import Icon from './Icon.jsx';
 import Logo from './Logo.jsx';
 
-function Header({ theme, onToggleTheme, onHome, onJoin, onLogOut }) {
+function Header({ theme, onToggleTheme, onHome, onLogOut }) {
   const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
   return (
@@ -19,13 +19,9 @@ function Header({ theme, onToggleTheme, onHome, onJoin, onLogOut }) {
           >
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
           </button>
-          <button type="button" className="icon-btn" onClick={onLogOut} aria-label="Log out">
-            <Icon name="logOut" />
-          </button>
-          {/* On phones the label gives way to an icon so the header fits on one line. */}
-          <button type="button" className="btn btn--contrast" onClick={onJoin} aria-label="Join Now">
-            <Icon name="sparkles" size={18} className="d-sm-none" />
-            <span className="d-none d-sm-inline">Join Now</span>
+          <button type="button" className="btn btn--outline" onClick={onLogOut}>
+            <Icon name="logOut" size={18} />
+            Log out
           </button>
         </div>
       </div>

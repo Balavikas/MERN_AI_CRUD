@@ -70,7 +70,28 @@ export const studentColumns = [
   { key: 'course_count', label: 'Courses' },
 ];
 
-export const facultyColumns = learnerColumns;
+export const facultyColumns = [
+  ...learnerColumns,
+  { key: 'course_count', label: 'Teaching' },
+];
+
+// The searchable tables behind "Show Registered Students" and "Show Registered Faculty" (components/Roster.jsx).
+export const rosters = {
+  students: {
+    endpoint: '/api/students',
+    title: 'Registered students',
+    description: 'Everyone with a student account, newest first. Courses is how many they are taking.',
+    recordLabel: 'students',
+    columns: studentColumns,
+  },
+  faculty: {
+    endpoint: '/api/faculty',
+    title: 'Registered faculty',
+    description: 'Everyone with a faculty account, newest first. Teaching is how many courses they are assigned to.',
+    recordLabel: 'faculty',
+    columns: facultyColumns,
+  },
+};
 
 export const resources = [
   {

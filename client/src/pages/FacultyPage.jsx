@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import AssignmentForm from '../components/AssignmentForm.jsx';
+import EnrollmentChart from '../components/EnrollmentChart.jsx';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
+import Roster from '../components/Roster.jsx';
 import StudentEditor from '../components/StudentEditor.jsx';
-import StudentRoster from '../components/StudentRoster.jsx';
 import useRecords from '../hooks/useRecords.js';
-import { formatDueDate } from '../data.js';
+import { formatDueDate, rosters } from '../data.js';
 
 // Faculty dashboard (specs/AfterLogin.md): "Edit student" on the left, "Show all registered students" in the
-// middle, "Add Assignment" on the right.
+// middle, "Add Assignment" on the right; the enrollments bar chart (specs/FacultyDashboard.md) runs full width below.
 function FacultyPage({ session }) {
   const students = useRecords('/api/students', 'students', session.token);
   const assignments = useRecords('/api/assignments', 'assignments', session.token);
+  // Courses a director assigned to this faculty member; only these accept new assignments from them.
+  const myCourses = useRecords('/api/faculty-assignments/mine', 'courses', session.token);
   const [openModal, setOpenModal] = useState('');
   const closeModal = () => setOpenModal('');
 
@@ -82,6 +85,24 @@ function FacultyPage({ session }) {
                   Add Assignment
                 </button>
 
+                <div className="dashboard__subsection">
+                  <h3 className="dashboard__subtitle">Courses you teach</h3>
+                  {myCourses.status === 'error' && <p className="field__error">{myCourses.error}</p>}
+                  {myCourses.status === 'success' && myCourses.records.length === 0 && (
+                    <p className="field__hint">None yet. A director assigns faculty to courses before they can post assignments.</p>
+                  )}
+                  {myCourses.records.length > 0 && (
+                    <ul className="my-courses" aria-label="Courses you teach">
+                      {myCourses.records.map((course) => (
+                        <li key={course.id} className="badge-pill">
+                          <Icon name={course.icon} size={14} />
+                          {course.title}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
                 {assignments.status === 'loading' && <p className="status-message" role="status">Loading assignments…</p>}
                 {assignments.status === 'error' && (
                   <div className="status-message status-message--error" role="alert">
@@ -117,6 +138,12 @@ function FacultyPage({ session }) {
         </div>
       </section>
 
+      <section className="section section--tight">
+        <div className="container">
+          <EnrollmentChart token={session.token} />
+        </div>
+      </section>
+
       <Modal
         id="edit-student"
         open={openModal === 'edit'}
@@ -129,7 +156,7 @@ function FacultyPage({ session }) {
       </Modal>
 
       <Modal id="roster" open={openModal === 'roster'} title="All registered students" wide onClose={closeModal}>
-        <StudentRoster id="faculty-roster" token={session.token} />
+        <Roster id="faculty-roster" token={session.token} roster={rosters.students} />
       </Modal>
 
       <Modal

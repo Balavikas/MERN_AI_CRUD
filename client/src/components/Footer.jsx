@@ -8,7 +8,15 @@ const socials = [
   { name: 'YouTube', icon: 'youtube' },
 ];
 
-function Footer({ onNavigate, onCategoryPick }) {
+// Links into a page in `hiddenPages` are left out (category links open Home), and so are columns left empty.
+function Footer({ onNavigate, onCategoryPick, hiddenPages = new Set() }) {
+  const columns = footerColumns
+    .map((column) => ({
+      ...column,
+      links: column.links.filter((link) => !hiddenPages.has(link.category ? 'home' : link.page)),
+    }))
+    .filter((column) => column.links.length > 0);
+
   function renderLink(link) {
     if (link.category) {
       return (
@@ -45,7 +53,7 @@ function Footer({ onNavigate, onCategoryPick }) {
             </div>
           </div>
 
-          {footerColumns.map((column) => (
+          {columns.map((column) => (
             <nav key={column.title} className="footer-col col-6 col-md-3 col-lg-2" aria-label={column.title}>
               <h2 className="footer-col__title">{column.title}</h2>
               <ul>
